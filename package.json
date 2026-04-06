@@ -2,14 +2,20 @@
   "name": "uhaksi",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
+  "prisma": {
+  "seed": "node prisma/seed.mjs"
+},
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "next": "16.2.2",
+    "prisma": "^6.19.3",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -21,6 +27,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
