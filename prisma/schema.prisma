@@ -8,12 +8,14 @@ datasource db {
 }
 
 model School {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  address   String?
-  createdAt DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  name           String   @unique
+  address        String?
+  neisRegionCode String?
+  neisCode       String?
+  createdAt      DateTime @default(now())
 
-  exams     Exam[]
+  exams          Exam[]
 }
 
 model Exam {
