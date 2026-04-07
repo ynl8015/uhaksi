@@ -26,11 +26,23 @@ model Exam {
   endDate   DateTime
   createdAt DateTime @default(now())
 
-  school    School       @relation(fields: [schoolId], references: [id])
-  subjects  ExamSubject[]
+  school        School         @relation(fields: [schoolId], references: [id])
+  subjects      ExamSubject[]
+  subjectRanges SubjectRange[]
 }
 
 model ExamSubject {
+  id      Int     @id @default(autoincrement())
+  examId  Int
+  date    String?
+  grade   Int?
+  period  Int?
+  subject String
+
+  exam    Exam    @relation(fields: [examId], references: [id])
+}
+
+model SubjectRange {
   id       Int    @id @default(autoincrement())
   examId   Int
   subject  String
