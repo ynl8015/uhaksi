@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
+import Providers from "@/components/Providers";
+import AuthButton from "@/components/AuthButton";
 
 export const metadata: Metadata = {
   title: "우리학교시험 | 학교 시험 정보 공유",
@@ -21,15 +23,15 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <nav style={{ background: 'var(--sage-dark)', padding: '0 24px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link href="/" style={{ color: '#f0f7f2', fontSize: '17px', fontWeight: '600', textDecoration: 'none', letterSpacing: '-0.3px' }}>
-            우리학교시험
-          </Link>
-          <button style={{ background: 'transparent', color: '#c8dece', border: '0.5px solid rgba(255,255,255,0.25)', padding: '7px 16px', borderRadius: '8px', fontSize: '14px', cursor: 'pointer' }}>
-            로그인
-          </button>
-        </nav>
-        {children}
+        <Providers>
+          <nav style={{ background: 'var(--sage-dark)', padding: '0 24px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Link href="/" style={{ color: '#f0f7f2', fontSize: '17px', fontWeight: '600', textDecoration: 'none', letterSpacing: '-0.3px' }}>
+              우리학교시험
+            </Link>
+            <AuthButton />
+          </nav>
+          {children}
+        </Providers>
       </body>
     </html>
   )

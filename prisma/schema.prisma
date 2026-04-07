@@ -39,3 +39,13 @@ model ExamSubject {
 
   exam     Exam   @relation(fields: [examId], references: [id])
 }
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  password      String
+  name          String
+  emailVerified Boolean   @default(false)
+  verifyToken   String?
+  createdAt     DateTime  @default(now())
+}
