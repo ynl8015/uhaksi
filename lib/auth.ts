@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { NextAuthOptions } from 'next-auth'
 import { normalizeLoginId } from '@/lib/loginId'
+import type { AccountKind } from '@prisma/client'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -31,6 +32,10 @@ export const authOptions: NextAuthOptions = {
           id: String(user.id),
           email: user.email,
           name: user.name,
+          accountKind: user.accountKind,
+          studentVerified: Boolean(user.studentVerifiedAt),
+          verifiedSchoolName: user.verifiedSchoolName,
+          isAdmin: user.isAdmin,
         }
       },
     }),
@@ -40,10 +45,30 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.name = user.name
-        token.email = user.email
+        const u = user as {
+          name?: string | null
+          email?: string | null
+          accountKind: AccountKind
+          studentVerified: boolean
+          verifiedSchoolName: string | null
+          isAdmin: boolean
+        }
+        token.name = u.name
+        token.email = u.email
+        token.accountKind = u.accountKind
+        token.studentVerified = u.studentVerified
+        token.verifiedSchoolName = u.verifiedSchoolName ?? null
+        token.isAdmin = u.isAdmin
+      }
+      if (trigger === 'update' && session) {
+        if (typeof session.studentVerified === 'boolean') {
+          token.studentVerified = session.studentVerified
+        }
+        if ('verifiedSchoolName' in session) {
+          token.verifiedSchoolName = session.verifiedSchoolName as string | null
+        }
       }
       return token
     },
@@ -52,6 +77,11 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.sub as string
         session.user.name = token.name as string
         session.user.email = token.email as string
+        session.user.accountKind = (token.accountKind as AccountKind) ?? 'OTHER'
+        session.user.studentVerified = Boolean(token.studentVerified)
+        session.user.verifiedSchoolName =
+          typeof token.verifiedSchoolName === 'string' ? token.verifiedSchoolName : null
+        session.user.isAdmin = Boolean(token.isAdmin)
       }
       return session
     },

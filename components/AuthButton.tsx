@@ -2,7 +2,37 @@
 
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
+import { useState } from 'react'
 import Button from '@/components/ui/Button'
+
+function PendingVerifyBadge() {
+  const [hover, setHover] = useState(false)
+  return (
+    <Link
+      href="/account/verify"
+      title="학생증 인증하고 커뮤니티 이용하기"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        fontSize: '11px',
+        fontWeight: 800,
+        letterSpacing: '0.03em',
+        color: hover ? 'var(--accent-strong)' : 'var(--muted)',
+        padding: '3px 9px',
+        borderRadius: '999px',
+        border: `1px solid ${hover ? 'var(--accent)' : 'rgba(17, 24, 39, 0.14)'}`,
+        background: hover ? 'var(--accent-soft)' : 'rgba(17, 24, 39, 0.04)',
+        textDecoration: 'none',
+        lineHeight: 1.25,
+        transition: 'color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.15s ease',
+        transform: hover ? 'translateY(-1px)' : 'none',
+        boxShadow: hover ? '0 2px 8px rgba(17, 24, 39, 0.06)' : 'none',
+      }}
+    >
+      미인증
+    </Link>
+  )
+}
 
 export default function AuthButton() {
   const { data: session } = useSession()
@@ -18,11 +48,24 @@ export default function AuthButton() {
   } as const
 
   if (session) {
+    const u = session.user
+    const showPendingBadge =
+      u?.accountKind === 'STUDENT' && u.studentVerified === false && u.isAdmin !== true
+
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <span style={{ color: 'var(--text)', fontSize: '14px', fontWeight: 800 }}>
-          {session.user?.name}님
-        </span>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span style={{ color: 'var(--text)', fontSize: '14px', fontWeight: 800 }}>{u?.name}님</span>
+          {showPendingBadge ? <PendingVerifyBadge /> : null}
+        </div>
         <Button type="button" onClick={() => signOut()} variant="secondary" style={navBtnStyle}>
           로그아웃
         </Button>

@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 import { Suspense, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { signIn } from 'next-auth/react'
@@ -15,6 +17,7 @@ function LoginPageInner() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const [accountKind, setAccountKind] = useState<'STUDENT' | 'OTHER' | null>(null)
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [idCheck, setIdCheck] = useState<IdCheck>('idle')
@@ -106,7 +109,13 @@ function LoginPageInner() {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ loginId: loginId.trim(), email: email.trim(), password, name: name.trim() }),
+      body: JSON.stringify({
+        loginId: loginId.trim(),
+        email: email.trim(),
+        password,
+        name: name.trim(),
+        accountKind,
+      }),
     })
     const data = await res.json()
 
@@ -259,6 +268,64 @@ function LoginPageInner() {
               style={inputStyle}
             />
           )}
+          {mode === 'register' && (
+            <div style={{ marginTop: '4px' }}>
+              <p style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 800, color: 'var(--text)' }}>
+                계정 유형
+              </p>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  color: 'var(--text)',
+                  lineHeight: 1.5,
+                  marginBottom: '8px',
+                }}
+              >
+                <input
+                  type="radio"
+                  name="accountKind"
+                  checked={accountKind === 'STUDENT'}
+                  onChange={() => setAccountKind('STUDENT')}
+                  style={{ marginTop: '3px' }}
+                />
+                <span>
+                  <b>학생</b> (중·고등학교){' '}
+                  <span style={{ color: 'var(--muted)', fontWeight: 500 }}>
+                    — 커뮤니티 이용 가능, 가입 후 학생증 인증이 필요해요.
+                  </span>
+                </span>
+              </label>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  color: 'var(--text)',
+                  lineHeight: 1.5,
+                }}
+              >
+                <input
+                  type="radio"
+                  name="accountKind"
+                  checked={accountKind === 'OTHER'}
+                  onChange={() => setAccountKind('OTHER')}
+                  style={{ marginTop: '3px' }}
+                />
+                <span>
+                  <b>그 외</b>{' '}
+                  <span style={{ color: 'var(--muted)', fontWeight: 500 }}>
+                    — 시험 정보 검색·이용은 가능하고, 학생 커뮤니티는 이용할 수 없어요.
+                  </span>
+                </span>
+              </label>
+            </div>
+          )}
           <input
             className="ui-input"
             type="password"
@@ -290,7 +357,8 @@ function LoginPageInner() {
               (idCheck !== 'available' ||
                 !name.trim() ||
                 !email.trim().includes('@') ||
-                password.length < 8))
+                password.length < 8 ||
+                accountKind === null))
           }
           variant="primary"
           style={{ width: '100%', padding: '12px', fontSize: '15px', marginBottom: '16px' }}
@@ -317,7 +385,10 @@ function LoginPageInner() {
             onClick={() => {
               setMode(mode === 'login' ? 'register' : 'login')
               setMessage('')
-              if (mode === 'login') setIdCheck('idle')
+              if (mode === 'login') {
+                setIdCheck('idle')
+                setAccountKind(null)
+              }
             }}
             style={{ background: 'none', border: 'none', color: 'var(--accent-strong)', cursor: 'pointer', fontSize: '14px', fontWeight: 900 }}
           >

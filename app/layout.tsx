@@ -59,27 +59,55 @@ export default function RootLayout({
                 justifyContent: 'space-between',
               }}
             >
-              <Link
-                href="/"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  textDecoration: 'none',
-                }}
-              >
-                <Image
-                  src={appIcon}
-                  alt="우리학교시험"
-                  width={36}
-                  height={36}
-                  priority
-                  style={{ display: 'block', borderRadius: '10px', flexShrink: 0 }}
-                />
-                <span style={{ fontSize: '18px', fontWeight: 1000, letterSpacing: '-0.5px', color: 'var(--text)' }}>
-                  우리학교시험
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Link
+                  href="/"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <Image
+                    src={appIcon}
+                    alt="우리학교시험"
+                    width={36}
+                    height={36}
+                    priority
+                    style={{ display: 'block', borderRadius: '10px', flexShrink: 0 }}
+                  />
+                  <span
+                    style={{ fontSize: '18px', fontWeight: 1000, letterSpacing: '-0.5px', color: 'var(--text)' }}
+                  >
+                    우리학교시험
+                  </span>
+                </Link>
+                <span
+                  aria-hidden
+                  style={{
+                    color: 'var(--muted)',
+                    fontSize: '15px',
+                    fontWeight: 300,
+                    opacity: 0.65,
+                    userSelect: 'none',
+                  }}
+                >
+                  |
                 </span>
-              </Link>
+                <Link
+                  href="/community"
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    color: 'var(--muted)',
+                    textDecoration: 'none',
+                    letterSpacing: '-0.2px',
+                  }}
+                >
+                  커뮤니티
+                </Link>
+              </div>
               <AuthButton />
             </div>
           </nav>

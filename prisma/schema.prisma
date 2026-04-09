@@ -8,6 +8,17 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum AccountKind {
+  STUDENT
+  OTHER
+}
+
+enum CommunityCategory {
+  QA
+  STUDY_TIP
+  STUDY_PROOF
+}
+
 model School {
   id             Int      @id @default(autoincrement())
   name           String
@@ -76,7 +87,14 @@ model User {
   passwordResetExpires DateTime?
   createdAt     DateTime  @default(now())
 
-  examReviews   ExamReview[]
+  accountKind         AccountKind @default(OTHER)
+  studentVerifiedAt   DateTime?
+  verifiedSchoolName  String?
+  isAdmin             Boolean     @default(false)
+
+  examReviews                ExamReview[]
+  studentCommunityPosts      StudentCommunityPost[]
+  studentCommunityComments   StudentCommunityComment[]
 }
 
 model ExamReview {
@@ -129,4 +147,34 @@ model ExamReviewAggregate {
 
   @@unique([schoolId, examTitle, grade])
   @@index([schoolId, examTitle, grade])
+}
+
+model StudentCommunityPost {
+  id        Int               @id @default(autoincrement())
+  userId    Int
+  category  CommunityCategory
+  title     String?
+  body      String
+  imageData String?           @db.Text
+  createdAt DateTime          @default(now())
+
+  user     User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments StudentCommunityComment[]
+
+  @@index([category, createdAt])
+  @@index([userId])
+}
+
+model StudentCommunityComment {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  body      String
+  createdAt DateTime @default(now())
+
+  post StudentCommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@index([userId])
 }
