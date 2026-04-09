@@ -183,25 +183,19 @@ function ForgotInner() {
         {idVerified && foundLoginId ? (
           <div
             style={{
-              background: 'var(--pastel-mint)',
-              border: '1px solid rgba(17, 24, 39, 0.08)',
+              background: 'var(--bg-app)',
+              border: '1px solid var(--border)',
               borderRadius: '14px',
               padding: '14px 16px',
               marginBottom: '16px',
               color: 'var(--text)',
               fontSize: '15px',
-              lineHeight: 1.65,
+              lineHeight: 1.5,
             }}
           >
-            본인 확인이 완료됐어요.
-            <br />
-            <br />
-            회원님의 <strong>로그인 아이디</strong>는 아래와 같아요.
-            <br />
-            <strong style={{ fontSize: '17px', letterSpacing: '0.03em' }}>{foundLoginId}</strong>
-            <br />
-            <br />
-            이 아이디와 비밀번호로 로그인해 주세요. (이메일은 로그인에 쓰지 않아요.)
+            로그인 아이디는{' '}
+            <strong style={{ fontWeight: 900, letterSpacing: '0.02em' }}>{foundLoginId}</strong>
+            입니다.
           </div>
         ) : null}
 
