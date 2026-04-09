@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Button from '@/components/ui/Button'
 
 type School = {
+  id: number
   name: string
+  address?: string | null
 }
 
 export default function SearchBar() {
@@ -15,10 +18,7 @@ export default function SearchBar() {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (query.length < 1) {
-      setResults([])
-      return
-    }
+    if (query.length < 1) return
     const timer = setTimeout(async () => {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
       const data = await res.json()
@@ -28,10 +28,10 @@ export default function SearchBar() {
     return () => clearTimeout(timer)
   }, [query])
 
-  const handleSelect = (name: string) => {
+  const handleSelect = (school: School) => {
     setShow(false)
-    setQuery(name)
-    router.push(`/school/${encodeURIComponent(name)}`)
+    setQuery(school.name)
+    router.push(`/school/${school.id}`)
   }
 
   const handleSearch = async () => {
@@ -39,7 +39,7 @@ export default function SearchBar() {
     setShow(false)
   
     if (results.length > 0) {
-      router.push(`/school/${encodeURIComponent(results[0].name)}`)
+      router.push(`/school/${results[0].id}`)
       return
     }
   
@@ -47,7 +47,7 @@ export default function SearchBar() {
     const data = await res.json()
   
     if (data.length > 0) {
-      router.push(`/school/${encodeURIComponent(data[0].name)}`)
+      router.push(`/school/${data[0].id}`)
     } else {
       alert('학교를 찾을 수 없습니다. 다시 검색해보세요.')
     }
@@ -57,38 +57,29 @@ export default function SearchBar() {
     <div style={{ width: '100%' }}>
       <div ref={ref} style={{ position: 'relative', display: 'flex', gap: '8px' }}>
         <input
+          className="ui-input"
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            const next = e.target.value
+            setQuery(next)
+            if (next.length < 1) {
+              setResults([])
+              setShow(false)
+            }
+          }}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           placeholder="학교 이름을 입력하세요"
           style={{
             flex: 1,
-            padding: '10px 14px',
-            border: '1.5px solid #1e3d2a',
-            borderRadius: '8px',
+            borderRadius: '14px',
             fontSize: '15px',
-            background: 'white',
-            outline: 'none',
-            color: '#1e3d2a',
+            boxShadow: 'var(--ui-shadow)',
           }}
         />
-        <button
-          onClick={handleSearch}
-          style={{
-            background: 'var(--sage-button)',
-            color: 'white',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            fontSize: '15px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <Button onClick={handleSearch} variant="primary" style={{ padding: '11px 18px', borderRadius: '14px', fontSize: '15px' }}>
           검색
-        </button>
+        </Button>
 
         {show && results.length > 0 && (
           <ul style={{
@@ -98,16 +89,19 @@ export default function SearchBar() {
             right: '72px',
             background: 'white',
             border: '1px solid var(--sage-border)',
-            borderRadius: '8px',
+            borderRadius: '14px',
             listStyle: 'none',
             padding: '4px 0',
             margin: 0,
             zIndex: 10,
+            maxHeight: '288px',
+            overflowY: 'auto',
+            boxShadow: '0 10px 24px rgba(15, 20, 25, 0.12)',
           }}>
             {results.map((school) => (
               <li
-                key={school.name}
-                onClick={() => handleSelect(school.name)}
+                key={school.id}
+                onClick={() => handleSelect(school)}
                 style={{
                   padding: '10px 14px',
                   cursor: 'pointer',
@@ -116,7 +110,12 @@ export default function SearchBar() {
                   textAlign: 'left',
                 }}
               >
-                {school.name}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontWeight: 600 }}>{school.name}</span>
+                  {school.address && (
+                    <span style={{ fontSize: '12px', color: 'var(--sage-muted)' }}>{school.address}</span>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

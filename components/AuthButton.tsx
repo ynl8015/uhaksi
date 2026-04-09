@@ -2,6 +2,7 @@
 
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
+import Button from '@/components/ui/Button'
 
 export default function AuthButton() {
   const { data: session } = useSession()
@@ -12,36 +13,41 @@ export default function AuthButton() {
         <span style={{ color: '#c8dece', fontSize: '13px' }}>
           {session.user?.name}님
         </span>
-        <button
+        <Button
+          type="button"
           onClick={() => signOut()}
+          variant="secondary"
           style={{
             background: 'transparent',
             color: '#c8dece',
-            border: '0.5px solid rgba(255,255,255,0.25)',
+            borderColor: 'rgba(255,255,255,0.25)',
             padding: '7px 16px',
             borderRadius: '8px',
             fontSize: '14px',
-            cursor: 'pointer',
           }}
         >
           로그아웃
-        </button>
+        </Button>
       </div>
     )
   }
 
   return (
-    <Link href="/login" style={{
-      background: 'transparent',
-      color: '#c8dece',
-      border: '0.5px solid rgba(255,255,255,0.25)',
-      padding: '7px 16px',
-      borderRadius: '8px',
-      fontSize: '14px',
-      cursor: 'pointer',
-      textDecoration: 'none',
-    }}>
-      로그인
+    <Link href="/login" style={{ textDecoration: 'none' }}>
+      <Button
+        type="button"
+        variant="secondary"
+        style={{
+          background: 'transparent',
+          color: '#c8dece',
+          borderColor: 'rgba(255,255,255,0.25)',
+          padding: '7px 16px',
+          borderRadius: '8px',
+          fontSize: '14px',
+        }}
+      >
+        로그인
+      </Button>
     </Link>
   )
 }

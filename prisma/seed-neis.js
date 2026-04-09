@@ -31,14 +31,50 @@ async function main() {
 
   let updated = 0
   for (const school of allSchools) {
-    const result = await prisma.school.updateMany({
-      where: { name: school.SCHUL_NM },
-      data: {
-        neisRegionCode: school.ATPT_OFCDC_SC_CODE,
-        neisCode: school.SD_SCHUL_CODE,
+    // 동명이교가 많아서 name만으로 업데이트하면 다른 지역 학교로 덮여써집니다.
+    // 우선 (name + address)로 매칭을 시도하고, 없으면 NEIS 코드 기준으로 upsert합니다.
+    const addr = school.ORG_RDNMA?.trim()
+    const where = addr ? { name_address: { name: school.SCHUL_NM, address: addr } } : undefined
+
+    try {
+      if (where) {
+        await prisma.school.upsert({
+          where,
+          update: {
+            neisRegionCode: school.ATPT_OFCDC_SC_CODE,
+            neisCode: school.SD_SCHUL_CODE,
+          },
+          create: {
+            name: school.SCHUL_NM,
+            address: addr,
+            neisRegionCode: school.ATPT_OFCDC_SC_CODE,
+            neisCode: school.SD_SCHUL_CODE,
+          },
+        })
+      } else {
+        await prisma.school.upsert({
+          where: {
+            neisRegionCode_neisCode: {
+              neisRegionCode: school.ATPT_OFCDC_SC_CODE,
+              neisCode: school.SD_SCHUL_CODE,
+            },
+          },
+          update: {
+            name: school.SCHUL_NM,
+            address: addr ?? undefined,
+          },
+          create: {
+            name: school.SCHUL_NM,
+            address: addr,
+            neisRegionCode: school.ATPT_OFCDC_SC_CODE,
+            neisCode: school.SD_SCHUL_CODE,
+          },
+        })
       }
-    })
-    if (result.count > 0) updated++
+      updated++
+    } catch {
+      // ignore individual failures (e.g. missing address) and continue
+    }
   }
 
   console.log(`완료! ${updated}개 학교 코드 업데이트됨`)

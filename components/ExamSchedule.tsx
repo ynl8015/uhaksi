@@ -1,5 +1,7 @@
-import ExamDateButton from '@/components/ExamDateButton'
 import ExamAccordion from '@/components/ExamAccordion'
+import { extractExamPeriodsFromNeis, type NeisScheduleRow } from '@/lib/neisExam'
+import { resolveNeisSchoolCodesByAddress } from '@/lib/neisSchool'
+import { prisma } from '@/lib/prisma'
 
 type ExamPeriod = {
   name: string
@@ -8,73 +10,130 @@ type ExamPeriod = {
   endDate: string
 }
 
+type ExistingExam = {
+  id: number
+  title: string
+  startDate: Date
+  endDate: Date
+  subjects: Array<{
+    id: number
+    subject: string
+    grade: number | null
+    period: number | null
+    date: string | null
+  }>
+  subjectRanges: Array<{
+    id: number
+    grade: number | null
+    subject: string
+    label: string | null
+    content: string | null
+    sortOrder: number
+  }>
+}
+
 type Props = {
+  schoolId: number
   schoolName: string
+  schoolAddress?: string | null
   neisRegionCode: string
   neisCode: string
 }
 
-function formatDate(yyyymmdd: string) {
-  const month = parseInt(yyyymmdd.slice(4, 6))
-  const day = parseInt(yyyymmdd.slice(6, 8))
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토']
-  const date = new Date(
-    parseInt(yyyymmdd.slice(0, 4)),
-    month - 1,
-    day
-  )
-  return `${month}/${day} (${weekdays[date.getDay()]})`
+function ymdToTime(yyyymmdd: string): number {
+  const y = Number(yyyymmdd.slice(0, 4))
+  const m = Number(yyyymmdd.slice(4, 6)) - 1
+  const d = Number(yyyymmdd.slice(6, 8))
+  return new Date(y, m, d).getTime()
+}
+
+async function fetchAllSchedule(neisRegionCode: string, neisCode: string, year: number) {
+  let allRows: NeisScheduleRow[] = []
+  let pageIndex = 1
+
+  while (true) {
+    const url = `https://open.neis.go.kr/hub/SchoolSchedule?KEY=${process.env.NEIS_API_KEY}&Type=json&pIndex=${pageIndex}&pSize=100&ATPT_OFCDC_SC_CODE=${neisRegionCode}&SD_SCHUL_CODE=${neisCode}&AA_FROM_YMD=${year}0101&AA_TO_YMD=${year}1231`
+
+    const res = await fetch(url, { cache: 'no-store' })
+    const data = await res.json()
+
+    if (!data.SchoolSchedule) break
+
+    const rows = (data?.SchoolSchedule?.[1]?.row ?? []) as NeisScheduleRow[]
+    console.log(`[fetch] 페이지 ${pageIndex}: ${rows.length}개`)
+    allRows = [...allRows, ...rows]
+
+    if (rows.length < 100) break
+    pageIndex++
+  }
+
+  console.log(`[fetch] 총 ${allRows.length}개`)
+  return allRows
 }
 
 async function getExamSchedule(neisRegionCode: string, neisCode: string): Promise<ExamPeriod[]> {
   const year = new Date().getFullYear()
-  const url = `https://open.neis.go.kr/hub/SchoolSchedule?KEY=${process.env.NEIS_API_KEY}&Type=json&ATPT_OFCDC_SC_CODE=${neisRegionCode}&SD_SCHUL_CODE=${neisCode}&AA_FROM_YMD=${year}0101&AA_TO_YMD=${year}1231`
+  const rows = await fetchAllSchedule(neisRegionCode, neisCode, year)
 
-  const res = await fetch(url, { next: { revalidate: 3600 } })
-  const data = await res.json()
-
-  if (!data.SchoolSchedule) return []
-
-  const rows = data.SchoolSchedule[1].row
-  const examKeywords = ['고사', '시험', '지필', '평가']
-  const examRows = rows.filter((row: { EVENT_NM: string }) =>
-    examKeywords.some(keyword => row.EVENT_NM.includes(keyword))
-  )
-
-  const grouped: Record<string, string[]> = {}
-  for (const row of examRows) {
-    if (!grouped[row.EVENT_NM]) grouped[row.EVENT_NM] = []
-    grouped[row.EVENT_NM].push(row.AA_YMD)
-  }
-
-  return Object.entries(grouped).map(([name, dates]) => ({
-    name,
-    dates: dates.sort(),
-    startDate: dates.sort()[0],
-    endDate: dates.sort()[dates.length - 1],
-  }))
+  return extractExamPeriodsFromNeis(rows)
 }
 
-export default async function ExamSchedule({ schoolName, neisRegionCode, neisCode }: Props) {
-  const exams = await getExamSchedule(neisRegionCode, neisCode)
+export default async function ExamSchedule({ schoolId, schoolName, schoolAddress, neisRegionCode, neisCode }: Props) {
+  const apiKey = process.env.NEIS_API_KEY ?? ''
+  const resolved = await resolveNeisSchoolCodesByAddress({
+    apiKey,
+    schoolName,
+    address: schoolAddress,
+  })
+  const finalRegionCode = resolved?.neisRegionCode ?? neisRegionCode
+  const finalNeisCode = resolved?.neisCode ?? neisCode
+
+  const exams = await getExamSchedule(finalRegionCode, finalNeisCode)
+  const existing = (await prisma.exam.findMany({
+    where: { schoolId },
+    include: { subjects: true, subjectRanges: true },
+  })) as ExistingExam[]
+  const existingByTitle = new Map(existing.map((e) => [e.title, e]))
 
   if (exams.length === 0) {
     return (
-      <p style={{ color: 'var(--sage-muted)', fontSize: '14px' }}>
+      <p style={{ color: 'var(--muted)', fontSize: '14px' }}>
         시험 일정 정보가 없습니다.
       </p>
     )
   }
+
+  const now = Date.now()
+  const ranked = exams
+    .map((e) => {
+      const start = ymdToTime(e.startDate)
+      const end = ymdToTime(e.endDate) + 24 * 60 * 60 * 1000 - 1
+      const isNow = now >= start && now <= end
+      const dist = start - now // 앞으로 다가오는 정도(음수면 이미 지남)
+      return { e, isNow, dist, start }
+    })
+    .sort((a, b) => {
+      if (a.isNow !== b.isNow) return a.isNow ? -1 : 1
+      const aFuture = a.dist >= 0
+      const bFuture = b.dist >= 0
+      if (aFuture !== bFuture) return aFuture ? -1 : 1
+      return aFuture ? a.dist - b.dist : b.start - a.start
+    })
+
+  const primaryName = ranked[0]?.e.name ?? null
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      {exams.map((exam) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {ranked.map(({ e }) => (
         <ExamAccordion
-          key={exam.name}
-          exam={exam}
+          key={e.name}
+          exam={e}
+          schoolId={schoolId}
           schoolName={schoolName}
+          existingExam={existingByTitle.get(e.name) ?? null}
+          defaultOpen={e.name === primaryName}
         />
       ))}
     </div>
   )
-
 }

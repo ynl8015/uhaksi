@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       where: {
         name: { contains: q }
       },
-      select: { name: true }
+      select: { id: true, name: true, address: true }
     })
     return NextResponse.json(school ?? null)
   }
@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
       name: { contains: q }
     },
     take: 10,
-    select: { name: true }
+    orderBy: [{ name: 'asc' }, { address: 'asc' }, { id: 'asc' }],
+    select: { id: true, name: true, address: true }
   })
 
   return NextResponse.json(schools)

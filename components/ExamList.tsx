@@ -5,8 +5,6 @@ import { useState } from 'react'
 type Subject = {
   id: number
   subject: string
-  textbook: string | null
-  pages: string | null
   grade: number | null
   period: number | null
   date: string | null
@@ -98,11 +96,6 @@ export default function ExamList({ exams }: Props) {
                                       <p style={{ color: 'var(--sage-text)', fontWeight: '600', margin: 0, fontSize: '13px' }}>
                                         {s.period}교시 {s.subject}
                                       </p>
-                                      {s.textbook && (
-                                        <p style={{ color: 'var(--sage-muted)', margin: 0, fontSize: '12px' }}>
-                                          {s.textbook} {s.pages && `| ${s.pages}`}
-                                        </p>
-                                      )}
                                     </div>
                                   ))}
                                 </div>

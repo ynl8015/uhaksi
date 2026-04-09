@@ -9,13 +9,20 @@ datasource db {
 
 model School {
   id             Int      @id @default(autoincrement())
-  name           String   @unique
+  name           String
   address        String?
   neisRegionCode String?
   neisCode       String?
   createdAt      DateTime @default(now())
 
   exams          Exam[]
+  examReviews    ExamReview[]
+  reviewAggs     ExamReviewAggregate[]
+
+  @@unique([name, address])
+  @@unique([neisRegionCode, neisCode])
+  @@index([name])
+  @@index([address])
 }
 
 model Exam {
@@ -45,11 +52,15 @@ model ExamSubject {
 model SubjectRange {
   id       Int    @id @default(autoincrement())
   examId   Int
+  grade    Int?
   subject  String
-  textbook String?
-  pages    String?
+  label    String?
+  content  String?
+  sortOrder Int  @default(0)
 
   exam     Exam   @relation(fields: [examId], references: [id])
+
+  @@index([examId, grade, subject])
 }
 
 model User {
@@ -60,4 +71,58 @@ model User {
   emailVerified Boolean   @default(false)
   verifyToken   String?
   createdAt     DateTime  @default(now())
+
+  examReviews   ExamReview[]
+}
+
+model ExamReview {
+  id               Int      @id @default(autoincrement())
+  schoolId         Int
+  examTitle        String
+  grade            Int
+  createdByUserId  Int
+
+  difficulty       Int      // 1..5
+  grammarCount     Int?     // 문법
+  vocabCount       Int?     // 어휘
+  readingCount     Int?     // 독해
+  writingCount     Int?     // 서술형/주관식
+  listeningCount   Int?     // 듣기(있으면)
+  otherCount       Int?     // 기타
+
+  freeText         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  school           School   @relation(fields: [schoolId], references: [id])
+  createdBy        User     @relation(fields: [createdByUserId], references: [id])
+
+  @@index([schoolId, examTitle, grade])
+  @@index([createdByUserId])
+  @@unique([schoolId, examTitle, grade, createdByUserId])
+}
+
+model ExamReviewAggregate {
+  id            Int      @id @default(autoincrement())
+  schoolId      Int
+  examTitle     String
+  grade         Int
+
+  windowStart   DateTime
+  windowEnd     DateTime
+
+  sourceCount   Int
+  statsJson     Json
+
+  aiSummary     String?
+  aiModel       String?
+  aiGeneratedAt DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  school        School   @relation(fields: [schoolId], references: [id])
+
+  @@unique([schoolId, examTitle, grade])
+  @@index([schoolId, examTitle, grade])
 }
