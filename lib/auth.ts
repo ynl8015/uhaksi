@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { NextAuthOptions } from 'next-auth'
 import { normalizeLoginId } from '@/lib/loginId'
-import type { AccountKind } from '@prisma/client'
+import type { AccountKind } from '@/types/accountKind'
 
 export const authOptions: NextAuthOptions = {
   providers: [

@@ -1,4 +1,6 @@
-export type CommunityCategory = 'QA' | 'STUDY_TIP' | 'STUDY_PROOF'
+import type { CommunityCategory } from '@/types/communityCategory'
+
+export type { CommunityCategory }
 
 export const COMMUNITY_TAB_LABELS: Record<CommunityCategory, string> = {
   QA: '질문·답변',

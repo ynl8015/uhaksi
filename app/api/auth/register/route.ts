@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import { Resend } from 'resend'
 import crypto from 'crypto'
 import { LOGIN_ID_RE, normalizeLoginId } from '@/lib/loginId'
-import { AccountKind } from '@prisma/client'
+import type { AccountKind } from '@/types/accountKind'
 
 export async function POST(request: NextRequest) {
   const apiKey = process.env.RESEND_API_KEY
@@ -17,9 +17,7 @@ export async function POST(request: NextRequest) {
   const { loginId, email, password, name } = body
 
   const accountKind: AccountKind =
-    body?.accountKind === 'STUDENT' || body?.accountKind === AccountKind.STUDENT
-      ? AccountKind.STUDENT
-      : AccountKind.OTHER
+    body?.accountKind === 'STUDENT' ? 'STUDENT' : 'OTHER'
 
   const rawName = typeof name === 'string' ? name.trim() : ''
   const loginNorm = typeof loginId === 'string' ? normalizeLoginId(loginId) : ''

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { AccountKind } from '@prisma/client'
 import { verifyStudentIdWithVision } from '@/lib/visionModeration'
 
 const MAX_BYTES = 5 * 1024 * 1024
@@ -34,7 +33,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (user.accountKind !== AccountKind.STUDENT) {
+  if (user.accountKind !== 'STUDENT') {
     return NextResponse.json(
       { error: '학생으로 가입한 계정만 학생증 인증을 할 수 있어요.' },
       { status: 403 },

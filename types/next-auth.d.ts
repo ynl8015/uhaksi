@@ -1,4 +1,4 @@
-import type { AccountKind } from '@prisma/client'
+import type { AccountKind } from '@/types/accountKind'
 import 'next-auth'
 
 declare module 'next-auth' {
