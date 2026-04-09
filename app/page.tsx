@@ -1,6 +1,7 @@
 import SearchBar from '@/components/SearchBar'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import Image from 'next/image'
 
 export default function Home() {
   return (
@@ -32,18 +33,26 @@ export default function Home() {
           우리 학교 시험,<br />어디서 찾으세요?
         </h1>
         <p style={{ color: 'var(--muted)', fontSize: '15px', lineHeight: '1.75', marginBottom: '24px' }}>
-          시험 범위, 교재, 출제 유형까지<br />과외 선생님과 학생 모두를 위한 시험 정보
+          시험 범위부터 출제 유형까지,<br />급할 때 바로 찾는 학교 시험 정보
         </p>
-        <div style={{ width: '100%', maxWidth: '460px', filter: 'drop-shadow(0 10px 28px rgba(17, 24, 39, 0.08))' }}>
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '460px',
+            filter: 'drop-shadow(0 10px 28px rgba(17, 24, 39, 0.08))',
+            position: 'relative',
+            zIndex: 50,
+          }}
+        >
           <SearchBar />
         </div>
       </section>
 
-      <section style={{ padding: '36px 24px 72px', display: 'flex', justifyContent: 'center' }}>
+      <section style={{ padding: '40px 24px 28px', display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 0 }}>
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '14px',
             maxWidth: '820px',
             width: '100%',
@@ -51,34 +60,21 @@ export default function Home() {
         >
           {[
             {
-              icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M9 12h6M9 16h4" strokeLinecap="round"/>
-                </svg>
-              ),
-              title: '시험 범위',
-              desc: '과목별 범위와 교재를 한눈에',
+              icon: { src: '/시험.png', alt: '시험 범위' },
+              title: '시험범위',
+              desc: '친구에게 물어보기 애매한 순간,\n검색 한 번으로 확인해요.',
               pastel: 'blue' as const,
             },
             {
-              icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ),
-              title: '출제 유형',
-              desc: '객관식·서술형과 난이도, 자유 후기로 요약',
+              icon: { src: '/선생님.png', alt: '선생님/학부모' },
+              title: '학원 선생님·학부모',
+              desc: '학생에게 묻지 않아도\n시험범위를 정확하게 알아요.',
               pastel: 'mint' as const,
             },
             {
-              icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              ),
-              title: '시험 총평',
-              desc: '난이도와 총평으로 미리 파악하기',
+              icon: { src: '/출제유형.png', alt: '진학 학교 시험 유형' },
+              title: '진학할 학교가 궁금할 때',
+              desc: '시험 유형이 궁금하다면,\n선배들의 후기를 먼저 봐요.',
               pastel: 'purple' as const,
             },
           ].map((item) => (
@@ -86,17 +82,53 @@ export default function Home() {
               key={item.title}
               pastel={item.pastel}
               style={{
-                padding: '18px 16px',
+                padding: '26px 18px 22px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '10px',
+                gap: '8px',
+                alignItems: 'center',
+                textAlign: 'center',
               }}
             >
-              <div style={{ color: 'var(--accent)' }}>{item.icon}</div>
-              <p className="ui-subtitle" style={{ color: 'var(--text)', margin: 0 }}>
+              <Image
+                src={item.icon.src}
+                alt={item.icon.alt}
+                width={112}
+                height={88}
+                style={{
+                  display: 'block',
+                  width: '112px',
+                  height: '88px',
+                  objectFit: 'contain',
+                  marginBottom: '2px',
+                  filter: 'drop-shadow(0 10px 18px rgba(17, 24, 39, 0.12))',
+                }}
+                priority
+              />
+              <p
+                className="ui-subtitle"
+                style={{
+                  color: 'var(--text)',
+                  margin: '2px 0 0',
+                  fontSize: '14px',
+                  fontWeight: 950,
+                  letterSpacing: '-0.15px',
+                }}
+              >
                 {item.title}
               </p>
-              <p style={{ color: 'var(--muted)', fontSize: '13px', lineHeight: '1.6', margin: 0 }}>{item.desc}</p>
+              <p
+                style={{
+                  color: 'var(--muted)',
+                  fontSize: '13px',
+                  lineHeight: '1.65',
+                  margin: '4px 0 0',
+                  maxWidth: '260px',
+                  whiteSpace: 'pre-line',
+                }}
+              >
+                {item.desc}
+              </p>
             </Card>
           ))}
         </div>

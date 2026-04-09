@@ -9,6 +9,18 @@ import appIcon from './icon.png'
 export const metadata: Metadata = {
   title: '우리학교시험 | 학교 시험 정보 공유',
   description: '전국 고등학교 시험 범위, 교재, 출제 유형을 공유하는 서비스',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  icons: {
+    icon: '/favicon.ico',
+  },
+  openGraph: {
+    title: '우리학교시험 | 학교 시험 정보 공유',
+    description: '전국 고등학교 시험 범위, 교재, 출제 유형을 공유하는 서비스',
+    url: '/',
+    siteName: '우리학교시험',
+    locale: 'ko_KR',
+    type: 'website',
+  },
 }
 
 export default function RootLayout({
