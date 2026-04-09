@@ -54,27 +54,24 @@ async function fetchAllSchedule(neisRegionCode: string, neisCode: string, year: 
   while (true) {
     const url = `https://open.neis.go.kr/hub/SchoolSchedule?KEY=${process.env.NEIS_API_KEY}&Type=json&pIndex=${pageIndex}&pSize=100&ATPT_OFCDC_SC_CODE=${neisRegionCode}&SD_SCHUL_CODE=${neisCode}&AA_FROM_YMD=${year}0101&AA_TO_YMD=${year}1231`
 
-    const res = await fetch(url, { cache: 'no-store' })
+    const res = await fetch(url, { next: { revalidate: 3600 } })
     const data = await res.json()
 
     if (!data.SchoolSchedule) break
 
     const rows = (data?.SchoolSchedule?.[1]?.row ?? []) as NeisScheduleRow[]
-    console.log(`[fetch] 페이지 ${pageIndex}: ${rows.length}개`)
     allRows = [...allRows, ...rows]
 
     if (rows.length < 100) break
     pageIndex++
   }
 
-  console.log(`[fetch] 총 ${allRows.length}개`)
   return allRows
 }
 
 async function getExamSchedule(neisRegionCode: string, neisCode: string): Promise<ExamPeriod[]> {
   const year = new Date().getFullYear()
   const rows = await fetchAllSchedule(neisRegionCode, neisCode, year)
-
   return extractExamPeriodsFromNeis(rows)
 }
 
@@ -88,11 +85,14 @@ export default async function ExamSchedule({ schoolId, schoolName, schoolAddress
   const finalRegionCode = resolved?.neisRegionCode ?? neisRegionCode
   const finalNeisCode = resolved?.neisCode ?? neisCode
 
-  const exams = await getExamSchedule(finalRegionCode, finalNeisCode)
-  const existing = (await prisma.exam.findMany({
-    where: { schoolId },
-    include: { subjects: true, subjectRanges: true },
-  })) as ExistingExam[]
+  const [exams, existing] = await Promise.all([
+    getExamSchedule(finalRegionCode, finalNeisCode),
+    prisma.exam.findMany({
+      where: { schoolId },
+      include: { subjects: true, subjectRanges: true },
+    }) as Promise<ExistingExam[]>,
+  ])
+
   const existingByTitle = new Map(existing.map((e) => [e.title, e]))
 
   if (exams.length === 0) {
@@ -109,7 +109,7 @@ export default async function ExamSchedule({ schoolId, schoolName, schoolAddress
       const start = ymdToTime(e.startDate)
       const end = ymdToTime(e.endDate) + 24 * 60 * 60 * 1000 - 1
       const isNow = now >= start && now <= end
-      const dist = start - now // 앞으로 다가오는 정도(음수면 이미 지남)
+      const dist = start - now
       return { e, isNow, dist, start }
     })
     .sort((a, b) => {
