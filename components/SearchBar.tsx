@@ -14,16 +14,12 @@ export default function SearchBar() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<School[]>([])
   const [show, setShow] = useState(false)
-  const [skipNext, setSkipNext] = useState(false)
+  const [isNavigating, setIsNavigating] = useState(false)
   const router = useRouter()
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (query.length < 1) return
-    if (skipNext) {
-      setSkipNext(false)
-      return
-    }
+    if (query.length < 1 || isNavigating) return
     const timer = setTimeout(async () => {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
       const data = await res.json()
@@ -31,12 +27,13 @@ export default function SearchBar() {
       setShow(true)
     }, 300)
     return () => clearTimeout(timer)
-  }, [query, skipNext])
+  }, [query, isNavigating])
 
   const handleSelect = (school: School) => {
-    setSkipNext(true)
+    setIsNavigating(true)
     setShow(false)
-    setQuery(school.name)
+    setResults([])
+    setQuery('')
     router.push(`/school/${school.id}`)
   }
 
@@ -45,7 +42,7 @@ export default function SearchBar() {
     setShow(false)
 
     if (results.length > 0) {
-      router.push(`/school/${results[0].id}`)
+      handleSelect(results[0])
       return
     }
 
@@ -53,7 +50,7 @@ export default function SearchBar() {
     const data = await res.json()
 
     if (data.length > 0) {
-      router.push(`/school/${data[0].id}`)
+      handleSelect(data[0])
     } else {
       alert('학교를 찾을 수 없습니다. 다시 검색해보세요.')
     }
@@ -68,6 +65,7 @@ export default function SearchBar() {
           value={query}
           onChange={(e) => {
             const next = e.target.value
+            setIsNavigating(false)
             setQuery(next)
             if (next.length < 1) {
               setResults([])
