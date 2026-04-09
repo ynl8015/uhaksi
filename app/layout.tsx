@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import './globals.css'
 import Link from 'next/link'
 import Providers from '@/components/Providers'
 import AuthButton from '@/components/AuthButton'
-import Badge from '@/components/ui/Badge'
+import appIcon from './icon.png'
 
 export const metadata: Metadata = {
   title: '우리학교시험 | 학교 시험 정보 공유',
@@ -55,10 +56,17 @@ export default function RootLayout({
                   textDecoration: 'none',
                 }}
               >
+                <Image
+                  src={appIcon}
+                  alt="우리학교시험"
+                  width={36}
+                  height={36}
+                  priority
+                  style={{ display: 'block', borderRadius: '10px', flexShrink: 0 }}
+                />
                 <span style={{ fontSize: '18px', fontWeight: 1000, letterSpacing: '-0.5px', color: 'var(--text)' }}>
                   우리학교시험
                 </span>
-                <Badge tone="accent">시험정보</Badge>
               </Link>
               <AuthButton />
             </div>

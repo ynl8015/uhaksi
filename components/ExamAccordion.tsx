@@ -5,9 +5,9 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
 import Chip from '@/components/ui/Chip'
-import Badge from '@/components/ui/Badge'
 import ExamFriendsSummary from '@/components/ExamFriendsSummary'
-import ExamReviewPanel from '@/components/ExamReviewPanel'
+import ExamReviewModal from '@/components/ExamReviewModal'
+import { IconCamera, IconPencil, IconTrash } from '@/components/icons/ToolbarIcons'
 
 type ExamPeriod = {
   name: string
@@ -75,8 +75,10 @@ export default function ExamAccordion({ exam, schoolId, existingExam, defaultOpe
   const router = useRouter()
   const [selectedGrade, setSelectedGrade] = useState<1 | 2 | 3>(1)
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null)
+  const [selectedPeriod, setSelectedPeriod] = useState<number | null>(null)
   const [editing, setEditing] = useState(false)
-  const [showReview, setShowReview] = useState(false)
+  const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [reviewReloadKey, setReviewReloadKey] = useState(0)
   const [table, setTable] = useState<TableState>(() => initTable(exam.dates))
   const [ranges, setRanges] = useState<Record<number, Record<string, Array<{ label: string; content: string }>>>>({})
   const [loading, setLoading] = useState(false)
@@ -116,8 +118,10 @@ export default function ExamAccordion({ exam, schoolId, existingExam, defaultOpe
 
     resetFromExisting()
     setEditing(false)
-    setShowReview(false)
+    setReviewModalOpen(false)
     setOpen(defaultOpen)
+    setSelectedSubject(null)
+    setSelectedPeriod(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingExam, exam.dates, defaultOpen])
 
@@ -145,11 +149,25 @@ export default function ExamAccordion({ exam, schoolId, existingExam, defaultOpe
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'ko'))
   }
 
+  const pickSubjectFromCell = (d: string, p: number) => {
+    const raw = (table[selectedGrade]?.[d]?.[p] ?? '').trim()
+    if (!raw || raw === '-') {
+      setSelectedSubject(null)
+      setSelectedPeriod(null)
+      return
+    }
+    setSelectedSubject(raw)
+    setSelectedPeriod(p)
+  }
+
   useEffect(() => {
-    const list = subjectsFromTable(selectedGrade)
-    setSelectedSubject(list[0] ?? null)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setSelectedSubject(null)
+    setSelectedPeriod(null)
   }, [selectedGrade])
+
+  useEffect(() => {
+    setReviewModalOpen(false)
+  }, [selectedSubject, selectedGrade])
 
   const handleImageUpload = async (file: File) => {
     if (existingExam && !editing) {
@@ -297,13 +315,17 @@ export default function ExamAccordion({ exam, schoolId, existingExam, defaultOpe
   }
 
   return (
-    <div className="ui-card" style={{ overflow: 'hidden' }}>
+    <div
+      style={{
+        borderBottom: '1px solid rgba(17, 24, 39, 0.08)',
+      }}
+    >
       <button
         onClick={() => setOpen(!open)}
         style={{
           width: '100%',
           background: 'transparent',
-          padding: '14px 16px',
+          padding: '14px 0',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -314,7 +336,7 @@ export default function ExamAccordion({ exam, schoolId, existingExam, defaultOpe
         <span className="ui-subtitle" style={{ color: 'var(--text)' }}>{exam.name}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {existingExam && (
-            <Badge tone="accent">등록됨</Badge>
+            <span className="ui-meta" style={{ fontWeight: 700 }}>등록됨</span>
           )}
           <span className="ui-meta" style={{ color: 'var(--muted)', fontSize: '13px' }}>
             {formatDate(exam.startDate)} ~ {formatDate(exam.endDate)}
@@ -326,57 +348,120 @@ export default function ExamAccordion({ exam, schoolId, existingExam, defaultOpe
       </button>
 
       {open && (
-        <div style={{ padding: '16px', background: 'transparent', borderTop: '1px solid var(--border)' }}>
+        <div style={{ padding: '16px 0 20px', background: 'transparent' }}>
           <>
-          {session && (
-            <div style={{ marginBottom: '14px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                style={{ display: 'none' }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) handleImageUpload(file)
-                }}
-              />
-              <Button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={parsing || (!editing && !!existingExam)}
-                variant="secondary"
-                size="sm"
-              >
-                {parsing ? '인식 중...' : '📷 통지문 사진으로 자동 입력'}
-              </Button>
-              {!existingExam && !editing && (
-                <Button type="button" onClick={() => setEditing(true)} variant="secondary" size="sm">
-                  입력 시작
-                </Button>
-              )}
-              {existingExam && !editing && (
-                <>
-                  <Button type="button" onClick={() => setEditing(true)} variant="secondary" size="sm">
-                    수정하기
-                  </Button>
-                  <Button type="button" onClick={handleDelete} variant="danger" size="sm">
-                    삭제하기
-                  </Button>
-                </>
-              )}
-              {editing && (
-                <Button type="button" onClick={handleCancelEdit} disabled={loading || parsing} variant="secondary" size="sm">
-                  취소
-                </Button>
-              )}
-              {parsing && (
-                <span style={{ color: 'var(--muted)', fontSize: '13px' }}>
-                  AI가 시험표를 읽고 있어요...
-                </span>
-              )}
+          <div
+            style={{
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              rowGap: '14px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+              {GRADES.map((g) => (
+                <Chip
+                  key={g}
+                  label={`${g}학년`}
+                  selected={selectedGrade === g}
+                  variant="tab"
+                  onClick={() => setSelectedGrade(g as 1 | 2 | 3)}
+                />
+              ))}
             </div>
-          )}
+            {session ? (
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginLeft: 'auto' }}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleImageUpload(file)
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={parsing || (!editing && !!existingExam)}
+                  variant="ghost"
+                  size="sm"
+                  title={parsing ? '인식 중…' : '사진으로 입력'}
+                  aria-label={parsing ? '인식 중' : '사진으로 입력'}
+                  style={{
+                    minWidth: '36px',
+                    padding: '8px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '10px',
+                  }}
+                >
+                  <IconCamera size={18} />
+                </Button>
+                {!existingExam && !editing && (
+                  <Button type="button" onClick={() => setEditing(true)} variant="secondary" size="sm" title="입력" aria-label="입력">
+                    입력
+                  </Button>
+                )}
+                {existingExam && !editing && (
+                  <>
+                    <Button
+                      type="button"
+                      onClick={() => setEditing(true)}
+                      variant="ghost"
+                      size="sm"
+                      title="수정"
+                      aria-label="수정"
+                      style={{
+                        minWidth: '36px',
+                        padding: '8px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '10px',
+                      }}
+                    >
+                      <IconPencil size={18} />
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleDelete}
+                      variant="ghostDanger"
+                      size="sm"
+                      title="삭제"
+                      aria-label="삭제"
+                      style={{
+                        minWidth: '36px',
+                        padding: '8px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '10px',
+                      }}
+                    >
+                      <IconTrash size={18} />
+                    </Button>
+                  </>
+                )}
+                {editing && (
+                  <Button type="button" onClick={handleCancelEdit} disabled={loading || parsing} variant="secondary" size="sm" title="취소" aria-label="취소">
+                    취소
+                  </Button>
+                )}
+                {parsing && (
+                  <span className="ui-meta" style={{ fontSize: '12px' }}>
+                    읽는 중…
+                  </span>
+                )}
+              </div>
+            ) : null}
+          </div>
 
           {!session && (
             <p style={{ color: 'var(--muted)', fontSize: '13px', marginBottom: '12px' }}>
@@ -384,20 +469,17 @@ export default function ExamAccordion({ exam, schoolId, existingExam, defaultOpe
             </p>
           )}
 
-          <div style={{ marginBottom: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {GRADES.map((g) => (
-              <Chip
-                key={g}
-                label={`${g}학년`}
-                selected={selectedGrade === g}
-                variant="tab"
-                onClick={() => setSelectedGrade(g as 1 | 2 | 3)}
-              />
-            ))}
-          </div>
-
-          <div className="ui-card" style={{ marginBottom: '16px', borderRadius: '14px', overflow: 'hidden' }}>
-            <table className="ui-table">
+          <div
+            style={{
+              marginBottom: '12px',
+              border: '1px solid var(--border)',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+            aria-busy={parsing}
+          >
+            <table className="ui-table ui-scheduleTable">
               <thead>
                 <tr>
                   <th style={{ width: '64px', textAlign: 'center' }}>교시</th>
@@ -410,214 +492,273 @@ export default function ExamAccordion({ exam, schoolId, existingExam, defaultOpe
               </thead>
               <tbody>
                 {PERIODS.map((p) => (
-                  <tr key={p}>
+                  <tr key={p} className={selectedPeriod === p ? 'ui-scheduleRow-selected' : undefined}>
                     <td style={{ width: '64px', textAlign: 'center', fontWeight: 900, fontSize: '12px' }}>{p}교시</td>
-                    {exam.dates.map((d) => (
-                      <td key={d}>
-                        {!showInputs ? (
-                          <div className="ui-cellText" title={table[selectedGrade][d][p] || '-'}>
-                            {table[selectedGrade][d][p] || <span className="ui-cellText-muted">-</span>}
-                          </div>
-                        ) : (
-                          <input
-                            className="ui-input ui-pill-input"
-                            value={table[selectedGrade][d][p]}
-                            onChange={(e) => handleChange(selectedGrade, d, p, e.target.value)}
-                            placeholder="-"
-                            disabled={!session}
-                            style={{
-                              ...inputStyle,
-                              textAlign: 'left' as const,
-                              fontSize: '12px',
-                            }}
-                          />
-                        )}
-                      </td>
-                    ))}
+                    {exam.dates.map((d) => {
+                      const cellRaw = (table[selectedGrade][d][p] ?? '').trim()
+                      const hasSubject = !!cellRaw && cellRaw !== '-'
+                      return (
+                        <td key={d} style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                          {!showInputs ? (
+                            <button
+                              type="button"
+                              className={['ui-scheduleCellBtn', hasSubject ? 'ui-scheduleCellBtn-interactive' : ''].filter(Boolean).join(' ')}
+                              onClick={() => pickSubjectFromCell(d, p)}
+                              disabled={!hasSubject}
+                              title={hasSubject ? cellRaw : undefined}
+                            >
+                              <div className="ui-cellText" title={cellRaw || undefined}>
+                                {cellRaw ? cellRaw : <span className="ui-cellText-muted">-</span>}
+                              </div>
+                            </button>
+                          ) : (
+                            <input
+                              className="ui-input ui-pill-input ui-scheduleInput"
+                              value={table[selectedGrade][d][p]}
+                              onChange={(e) => handleChange(selectedGrade, d, p, e.target.value)}
+                              onFocus={() => pickSubjectFromCell(d, p)}
+                              placeholder="-"
+                              disabled={!session}
+                              style={{
+                                ...inputStyle,
+                                textAlign: 'center' as const,
+                                fontSize: '12px',
+                              }}
+                            />
+                          )}
+                        </td>
+                      )
+                    })}
                   </tr>
                 ))}
               </tbody>
             </table>
+            {parsing ? (
+              <div
+                role="status"
+                aria-live="polite"
+                aria-label="시험표 이미지를 읽는 중입니다"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '14px',
+                  background: 'rgba(255, 255, 255, 0.86)',
+                  backdropFilter: 'blur(3px)',
+                  WebkitBackdropFilter: 'blur(3px)',
+                  zIndex: 4,
+                }}
+              >
+                <span className="ui-spinner" aria-hidden />
+                <span className="ui-meta" style={{ fontSize: '13px', fontWeight: 700, color: 'var(--muted)' }}>
+                  읽는 중…
+                </span>
+              </div>
+            ) : null}
           </div>
 
-          {session && (
-            <div style={{ marginBottom: '16px' }}>
-              <div className="ui-divider" style={{ margin: '4px 0 16px' }} />
-              <p className="ui-subtitle" style={{ margin: '0 0 10px', color: 'var(--text)' }}>
-                과목별 시험범위
-              </p>
-              <div className="ui-stack">
-                {subjectsFromTable(selectedGrade).length === 0 ? (
-                  <p style={{ margin: 0, color: 'var(--muted)', fontSize: '13px' }}>
-                    먼저 위 표에 과목을 입력하거나 사진 인식을 해주세요.
+          <p className="ui-meta" style={{ margin: '10px 0 0', fontSize: '12px', lineHeight: 1.5 }}>
+            {showInputs ? '셀을 누르면 아래에서 그 과목 범위를 적을 수 있어요.' : '과목 칸을 누르면 아래에 범위가 나와요.'}
+          </p>
+
+          {(existingExam || session) && (
+            <div style={{ marginBottom: '18px' }}>
+              {subjectsFromTable(selectedGrade).length === 0 ? (
+                <p style={{ margin: '18px 0 0', color: 'var(--muted)', fontSize: '13px' }}>
+                  {session && editing ? '표에 과목을 채운 뒤 범위를 적을 수 있어요.' : '이 학년에 등록된 과목이 없어요.'}
+                </p>
+              ) : !selectedSubject ? null : (
+                <>
+                  <div className="ui-divider" style={{ margin: '20px 0 16px' }} />
+                  <p className="ui-subtitle" style={{ margin: '0 0 14px', color: 'var(--text)' }}>
+                    {selectedSubject} 시험범위
+                    <span className="ui-meta" style={{ marginLeft: '8px', fontWeight: 600 }}>{selectedGrade}학년</span>
                   </p>
-                ) : (
-                  <>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      {subjectsFromTable(selectedGrade).map((subj) => (
-                        <Chip
-                          key={subj}
-                          label={subj}
-                          selected={selectedSubject === subj}
-                          onClick={() => setSelectedSubject(subj)}
-                        />
-                      ))}
-                    </div>
 
-                    {selectedSubject && (
-                      <div className="ui-card" style={{ padding: '14px' }}>
-                        <p className="ui-title" style={{ margin: '0 0 10px' }}>
-                          {selectedSubject}
-                        </p>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          {(ranges[selectedGrade]?.[selectedSubject] ?? []).length === 0 && readOnly && (
-                            <p style={{ margin: 0, color: 'var(--muted)', fontSize: '13px' }}>
-                              등록된 시험범위가 없습니다.
-                            </p>
-                          )}
-
-                          {(ranges[selectedGrade]?.[selectedSubject] ?? []).map((item, idx) => {
-                            if (readOnly) {
-                              return (
-                                <div key={idx}>
-                                  {idx > 0 && <div className="ui-divider" style={{ margin: '10px 0' }} />}
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                                    <Badge tone="accent">{item.label?.trim() ? item.label : '범위'}</Badge>
-                                    <span className="ui-meta">{selectedGrade}학년</span>
-                                  </div>
-                                  <p
-                                    style={{
-                                      margin: 0,
-                                      fontSize: '14px',
-                                      color: 'var(--text)',
-                                      lineHeight: 1.7,
-                                      whiteSpace: 'pre-wrap',
-                                      fontWeight: 700,
-                                    }}
-                                  >
-                                    {item.content?.trim() ? item.content : '-'}
-                                  </p>
-                                </div>
-                              )
-                            }
-
-                            return (
-                              <div
-                                key={idx}
-                                style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: '8px', alignItems: 'start' }}
-                              >
-                                <input
-                                  className="ui-input"
-                                  value={item.label}
-                                  onChange={(e) => {
-                                    const v = e.target.value
-                                    setRanges((prev) => {
-                                      const gradeMap = { ...(prev[selectedGrade] ?? {}) }
-                                      const list = [...(gradeMap[selectedSubject] ?? [])]
-                                      list[idx] = { ...list[idx], label: v }
-                                      gradeMap[selectedSubject] = list
-                                      return { ...prev, [selectedGrade]: gradeMap }
-                                    })
-                                  }}
-                                  placeholder="구분(예: 교과서)"
-                                  style={{ ...inputStyle, textAlign: 'left' as const, borderRadius: '10px' }}
-                                />
-                                <textarea
-                                  className="ui-textarea"
-                                  value={item.content}
-                                  onChange={(e) => {
-                                    const v = e.target.value
-                                    setRanges((prev) => {
-                                      const gradeMap = { ...(prev[selectedGrade] ?? {}) }
-                                      const list = [...(gradeMap[selectedSubject] ?? [])]
-                                      list[idx] = { ...list[idx], content: v }
-                                      gradeMap[selectedSubject] = list
-                                      return { ...prev, [selectedGrade]: gradeMap }
-                                    })
-                                  }}
-                                  placeholder="범위 내용을 입력하세요 (여러 줄 가능)"
-                                  rows={2}
-                                  style={{
-                                    width: '100%',
-                                    fontSize: '12px',
-                                    borderRadius: '10px',
-                                  }}
-                                />
-                                <Button
-                                  type="button"
-                                  onClick={() => {
-                                    setRanges((prev) => {
-                                      const gradeMap = { ...(prev[selectedGrade] ?? {}) }
-                                      const list = [...(gradeMap[selectedSubject] ?? [])]
-                                      list.splice(idx, 1)
-                                      gradeMap[selectedSubject] = list
-                                      return { ...prev, [selectedGrade]: gradeMap }
-                                    })
-                                  }}
-                                  variant="secondary"
-                                  style={{ padding: '8px 10px', fontSize: '12px' }}
-                                >
-                                  삭제
-                                </Button>
-                              </div>
-                            )
-                          })}
-
-                          <div>
-                            <Button
-                              type="button"
-                              onClick={() => {
-                                setRanges((prev) => {
-                                  const gradeMap = { ...(prev[selectedGrade] ?? {}) }
-                                  const list = [...(gradeMap[selectedSubject] ?? [])]
-                                  list.push({ label: '', content: '' })
-                                  gradeMap[selectedSubject] = list
-                                  return { ...prev, [selectedGrade]: gradeMap }
-                                })
-                              }}
-                              variant="secondary"
-                              style={{
-                                opacity: readOnly ? 0.0 : 1,
-                                height: readOnly ? 0 : undefined,
-                                paddingTop: readOnly ? 0 : undefined,
-                                paddingBottom: readOnly ? 0 : undefined,
-                                borderWidth: readOnly ? 0 : undefined,
-                              }}
-                              disabled={readOnly}
-                            >
-                              + 범위 항목 추가
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {(ranges[selectedGrade]?.[selectedSubject] ?? []).length === 0 && readOnly && (
+                      <p style={{ margin: 0, color: 'var(--muted)', fontSize: '13px' }}>
+                        등록된 시험 범위가 없습니다.
+                      </p>
                     )}
-                  </>
-                )}
-              </div>
-            </div>
-          )}
 
-          {session && (
-            <div style={{ marginBottom: '16px' }}>
-              <div className="ui-divider" style={{ margin: '4px 0 16px' }} />
-              <ExamFriendsSummary schoolId={schoolId} examTitle={exam.name} grade={selectedGrade} />
+                    {(ranges[selectedGrade]?.[selectedSubject] ?? []).map((item, idx) => {
+                      if (readOnly) {
+                        return (
+                          <div key={idx}>
+                            {idx > 0 && <div className="ui-divider" style={{ margin: '10px 0' }} />}
+                            <p className="ui-meta" style={{ margin: '0 0 6px', fontWeight: 800, color: 'var(--text)' }}>
+                              {item.label?.trim() ? item.label : '범위'}
+                            </p>
+                            <p
+                              style={{
+                                margin: 0,
+                                fontSize: '14px',
+                                color: 'var(--text)',
+                                lineHeight: 1.65,
+                                whiteSpace: 'pre-wrap',
+                              }}
+                            >
+                              {item.content?.trim() ? item.content : '-'}
+                            </p>
+                          </div>
+                        )
+                      }
 
-              <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                  type="button"
-                  variant={showReview ? 'secondary' : 'primary'}
-                  size="md"
-                  onClick={() => setShowReview((v) => !v)}
-                >
-                  {showReview ? '작성 닫기' : '내 후기 남기기'}
-                </Button>
-              </div>
+                      return (
+                        <div
+                          key={idx}
+                          style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: '8px', alignItems: 'start' }}
+                        >
+                          <input
+                            className="ui-input"
+                            value={item.label}
+                            onChange={(e) => {
+                              const v = e.target.value
+                              setRanges((prev) => {
+                                const gradeMap = { ...(prev[selectedGrade] ?? {}) }
+                                const list = [...(gradeMap[selectedSubject] ?? [])]
+                                list[idx] = { ...list[idx], label: v }
+                                gradeMap[selectedSubject] = list
+                                return { ...prev, [selectedGrade]: gradeMap }
+                              })
+                            }}
+                            placeholder="구분(예: 교과서)"
+                            style={{ ...inputStyle, textAlign: 'left' as const, borderRadius: '10px' }}
+                          />
+                          <textarea
+                            className="ui-textarea"
+                            value={item.content}
+                            onChange={(e) => {
+                              const v = e.target.value
+                              setRanges((prev) => {
+                                const gradeMap = { ...(prev[selectedGrade] ?? {}) }
+                                const list = [...(gradeMap[selectedSubject] ?? [])]
+                                list[idx] = { ...list[idx], content: v }
+                                gradeMap[selectedSubject] = list
+                                return { ...prev, [selectedGrade]: gradeMap }
+                              })
+                            }}
+                            placeholder="범위 내용을 입력하세요 (여러 줄 가능)"
+                            rows={2}
+                            style={{
+                              width: '100%',
+                              fontSize: '12px',
+                              borderRadius: '10px',
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              setRanges((prev) => {
+                                const gradeMap = { ...(prev[selectedGrade] ?? {}) }
+                                const list = [...(gradeMap[selectedSubject] ?? [])]
+                                list.splice(idx, 1)
+                                gradeMap[selectedSubject] = list
+                                return { ...prev, [selectedGrade]: gradeMap }
+                              })
+                            }}
+                            variant="secondary"
+                            style={{ padding: '8px 10px', fontSize: '12px' }}
+                          >
+                            삭제
+                          </Button>
+                        </div>
+                      )
+                    })}
 
-              {showReview && (
-                <div style={{ marginTop: '12px' }}>
-                  <ExamReviewPanel schoolId={schoolId} examTitle={exam.name} grade={selectedGrade} />
-                </div>
+                    <div>
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setRanges((prev) => {
+                            const gradeMap = { ...(prev[selectedGrade] ?? {}) }
+                            const list = [...(gradeMap[selectedSubject] ?? [])]
+                            list.push({ label: '', content: '' })
+                            gradeMap[selectedSubject] = list
+                            return { ...prev, [selectedGrade]: gradeMap }
+                          })
+                        }}
+                        variant="secondary"
+                        style={{
+                          opacity: readOnly ? 0.0 : 1,
+                          height: readOnly ? 0 : undefined,
+                          paddingTop: readOnly ? 0 : undefined,
+                          paddingBottom: readOnly ? 0 : undefined,
+                          borderWidth: readOnly ? 0 : undefined,
+                        }}
+                        disabled={readOnly}
+                      >
+                        + 범위 항목 추가
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: '22px',
+                      padding: '20px 18px 18px',
+                      borderRadius: '14px',
+                      border: '1px solid rgba(17, 24, 39, 0.12)',
+                      background: 'rgba(255, 255, 255, 0.98)',
+                      boxShadow: '0 2px 8px rgba(17, 24, 39, 0.06)',
+                    }}
+                  >
+                    <p
+                      style={{
+                        margin: '0 0 16px',
+                        fontSize: '16px',
+                        fontWeight: 800,
+                        color: 'var(--text)',
+                        letterSpacing: '-0.35px',
+                        lineHeight: 1.35,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <span aria-hidden style={{ fontSize: '22px', lineHeight: 1, flexShrink: 0 }}>
+                        🤔
+                      </span>
+                      <span>친구들은 시험 치고 이렇게 느꼈대요</span>
+                    </p>
+                    <ExamFriendsSummary
+                      schoolId={schoolId}
+                      examTitle={exam.name}
+                      grade={selectedGrade}
+                      reloadKey={reviewReloadKey}
+                      omitSectionTitle
+                      locked={!session}
+                    />
+                    {session && (
+                      <>
+                        <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'flex-end' }}>
+                          <Button type="button" variant="primary" size="md" onClick={() => setReviewModalOpen(true)}>
+                            내 후기 남기기
+                          </Button>
+                        </div>
+                        <ExamReviewModal
+                          open={reviewModalOpen}
+                          onClose={() => setReviewModalOpen(false)}
+                          schoolId={schoolId}
+                          examTitle={exam.name}
+                          grade={selectedGrade}
+                          onSaved={() => {
+                            setReviewModalOpen(false)
+                            setReviewReloadKey((k) => k + 1)
+                          }}
+                          onDeleted={() => {
+                            setReviewModalOpen(false)
+                            setReviewReloadKey((k) => k + 1)
+                          }}
+                        />
+                      </>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           )}

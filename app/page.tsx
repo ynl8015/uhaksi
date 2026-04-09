@@ -34,10 +34,8 @@ export default function Home() {
         <p style={{ color: 'var(--muted)', fontSize: '15px', lineHeight: '1.75', marginBottom: '24px' }}>
           시험 범위, 교재, 출제 유형까지<br />과외 선생님과 학생 모두를 위한 시험 정보
         </p>
-        <div style={{ width: '100%', maxWidth: '460px' }}>
-          <Card style={{ padding: '12px', boxShadow: 'var(--ui-shadow-lg)' }}>
+        <div style={{ width: '100%', maxWidth: '460px', filter: 'drop-shadow(0 10px 28px rgba(17, 24, 39, 0.08))' }}>
           <SearchBar />
-          </Card>
         </div>
       </section>
 
@@ -70,7 +68,7 @@ export default function Home() {
                 </svg>
               ),
               title: '출제 유형',
-              desc: '어법, 어휘, 서술형 유형별 문항 수',
+              desc: '객관식·서술형과 난이도, 자유 후기로 요약',
               pastel: 'mint' as const,
             },
             {

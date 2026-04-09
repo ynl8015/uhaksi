@@ -128,8 +128,8 @@ export default async function SchoolPage({ params }: Props) {
     <main>
       <section
         style={{
-          background: 'transparent',
-          padding: '32px 24px 18px',
+          background: 'var(--pastel-yellow)',
+          padding: '32px 24px 22px',
           borderBottom: '1px solid var(--border)',
         }}
       >

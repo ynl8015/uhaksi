@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { upsertExamReviewAggregate } from '@/lib/examAnalysis'
+import { purgeStaleExamData } from '@/lib/dataRetention'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +18,9 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}))
+  const runPurge = body.purge !== false
+  const purgeResult = runPurge ? await purgeStaleExamData() : null
+
   const schoolId = typeof body.schoolId === 'number' ? body.schoolId : null
   const examTitle = typeof body.examTitle === 'string' ? body.examTitle : null
   const grade = typeof body.grade === 'number' ? body.grade : null
@@ -46,6 +50,6 @@ export async function POST(request: NextRequest) {
     updated++
   }
 
-  return NextResponse.json({ ok: true, updated })
+  return NextResponse.json({ ok: true, updated, purge: purgeResult })
 }
 

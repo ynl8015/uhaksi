@@ -9,6 +9,8 @@ type Props = {
   schoolId: number
   examTitle: string
   grade: number
+  /** 후기 저장·삭제 등 집계 갱신 후 다시 불러올 때 증가 */
+  reloadKey?: number
 }
 
 type Aggregate = {
@@ -28,7 +30,7 @@ function asStatsShape(v: unknown): StatsShape {
   return v as StatsShape
 }
 
-export default function ExamAnalysisPanel({ schoolId, examTitle, grade }: Props) {
+export default function ExamAnalysisPanel({ schoolId, examTitle, grade, reloadKey = 0 }: Props) {
   const [loading, setLoading] = useState(true)
   const [agg, setAgg] = useState<Aggregate | null>(null)
 
@@ -50,7 +52,7 @@ export default function ExamAnalysisPanel({ schoolId, examTitle, grade }: Props)
     return () => {
       cancelled = true
     }
-  }, [schoolId, examTitle, grade])
+  }, [schoolId, examTitle, grade, reloadKey])
 
   const difficultyData = useMemo(() => {
     const hist = asStatsShape(agg?.statsJson)?.difficulty?.histogram ?? null
@@ -61,15 +63,12 @@ export default function ExamAnalysisPanel({ schoolId, examTitle, grade }: Props)
   const countAvgs = useMemo(() => {
     const c = asStatsShape(agg?.statsJson)?.counts ?? null
     if (!c) return []
-    const items = [
-      { key: 'grammar', label: '문법' },
-      { key: 'vocab', label: '어휘' },
-      { key: 'reading', label: '독해' },
-      { key: 'writing', label: '서술형' },
-      { key: 'listening', label: '듣기' },
-      { key: 'other', label: '기타' },
-    ] as const
-    return items.map((it) => ({ category: it.label, avg: Number(c[it.key]?.avg ?? 0) }))
+    const mcq = Number(c.mcq?.avg ?? c.grammar?.avg ?? 0)
+    const subj = Number(c.subjective?.avg ?? c.writing?.avg ?? 0)
+    return [
+      { category: '객관식', avg: mcq },
+      { category: '서술형', avg: subj },
+    ]
   }, [agg])
 
   if (loading) {
@@ -123,7 +122,7 @@ export default function ExamAnalysisPanel({ schoolId, examTitle, grade }: Props)
 
         <div className="ui-card" style={{ padding: '12px' }}>
           <p className="ui-subtitle" style={{ margin: '0 0 10px', color: 'var(--text)' }}>
-            영역별 평균 문항수(자가보고)
+            객관식·서술형 평균 문항수(자가보고)
           </p>
           <div style={{ width: '100%', height: 240 }}>
             <ResponsiveContainer width="100%" height="100%">

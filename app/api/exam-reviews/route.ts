@@ -2,11 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import { syncExamReviewAggregateFromReviews } from '@/lib/examAnalysis'
 
 function toInt(v: string | null): number | null {
   if (v === null) return null
   const n = Number(v)
   return Number.isFinite(n) ? n : null
+}
+
+function optCount(v: unknown): number | null {
+  if (v === undefined || v === null || v === '') return null
+  const n = Number(v)
+  if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) return null
+  return n
 }
 
 export async function GET(request: NextRequest) {
@@ -39,11 +47,7 @@ export async function GET(request: NextRequest) {
           grade: true,
           difficulty: true,
           grammarCount: true,
-          vocabCount: true,
-          readingCount: true,
           writingCount: true,
-          listeningCount: true,
-          otherCount: true,
           freeText: true,
           createdAt: true,
           updatedAt: true,
@@ -79,13 +83,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'difficulty는 1~5여야 합니다.' }, { status: 400 })
   }
 
+  const mcq = optCount(body.mcqCount ?? body.grammarCount)
+  const subjective = optCount(body.subjectiveCount ?? body.writingCount)
   const counts = {
-    grammarCount: body.grammarCount ?? null,
-    vocabCount: body.vocabCount ?? null,
-    readingCount: body.readingCount ?? null,
-    writingCount: body.writingCount ?? null,
-    listeningCount: body.listeningCount ?? null,
-    otherCount: body.otherCount ?? null,
+    grammarCount: mcq,
+    vocabCount: null,
+    readingCount: null,
+    writingCount: subjective,
+    listeningCount: null,
+    otherCount: null,
   } as const
 
   const created = await prisma.examReview.upsert({
@@ -113,6 +119,8 @@ export async function POST(request: NextRequest) {
     },
     select: { id: true },
   })
+
+  await syncExamReviewAggregateFromReviews({ schoolId, examTitle, grade })
 
   return NextResponse.json({ ok: true, id: created.id })
 }

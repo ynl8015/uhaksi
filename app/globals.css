@@ -57,6 +57,24 @@ body {
   color: var(--muted);
 }
 
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Schedule / async overlay */
+.ui-spinner {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(17, 24, 39, 0.1);
+  border-top-color: var(--accent);
+  animation: ui-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
 /* Shared UI primitives (used via inline styles too) */
 .ui-card {
   background: var(--bg);
@@ -96,10 +114,81 @@ body {
   background: rgba(17, 24, 39, 0.015);
 }
 
+.ui-table tbody tr.ui-scheduleRow-selected td {
+  background: rgba(17, 24, 39, 0.065) !important;
+}
+
+.ui-table tbody tr.ui-scheduleRow-selected td:first-child {
+  box-shadow: inset 3px 0 0 rgba(17, 24, 39, 0.22);
+}
+
+.ui-table.ui-scheduleTable tbody tr:not(.ui-scheduleRow-selected):hover td {
+  background: rgba(17, 24, 39, 0.035);
+}
+
+.ui-table.ui-scheduleTable tbody tr.ui-scheduleRow-selected:hover td {
+  background: rgba(17, 24, 39, 0.08) !important;
+}
+
+.ui-scheduleCellBtn {
+  width: 100%;
+  margin: 0;
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  text-align: center;
+  font: inherit;
+  color: inherit;
+  border-radius: 8px;
+  display: block;
+  transition: background 140ms ease;
+}
+
+.ui-scheduleCellBtn-interactive {
+  cursor: pointer;
+}
+
+.ui-scheduleCellBtn-interactive:hover:not(:disabled) {
+  background: rgba(17, 24, 39, 0.1);
+}
+
+.ui-scheduleCellBtn:disabled {
+  cursor: default;
+}
+
+.ui-table.ui-scheduleTable tbody td:has(.ui-scheduleInput):hover {
+  background: rgba(17, 24, 39, 0.05);
+}
+
+.ui-scheduleInput {
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.ui-scheduleInput:hover:not(:disabled) {
+  background: rgba(17, 24, 39, 0.04);
+}
+
 .ui-divider {
   height: 1px;
   background: var(--border);
   width: 100%;
+}
+
+/* ExamFriendsSummary: score column vs bar chart */
+.exam-review-summary-left {
+  border-right: 1px solid rgba(17, 24, 39, 0.08);
+  padding-right: 13px;
+}
+
+@media (max-width: 540px) {
+  .exam-review-summary-left {
+    border-right: none;
+    border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+    padding-right: 0;
+    padding-bottom: 13px;
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 .ui-stack {
@@ -152,6 +241,25 @@ body {
 }
 .ui-button-danger:hover {
   background: rgba(180, 35, 24, 0.06);
+}
+
+.ui-button-ghost {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  box-shadow: none;
+}
+
+.ui-button-ghost:hover:not(:disabled) {
+  background: rgba(17, 24, 39, 0.07);
+}
+
+.ui-button-ghost-danger {
+  color: #b42318;
+}
+
+.ui-button-ghost-danger:hover:not(:disabled) {
+  background: rgba(180, 35, 24, 0.09);
 }
 
 .ui-chip {
@@ -221,6 +329,38 @@ body {
   color: var(--accent-strong);
 }
 
+/* Star rating — no tile/box (후기 등) */
+.ui-stars.ui-stars-plain {
+  gap: 2px;
+}
+
+.ui-starBtn.ui-starBtn-plain {
+  border: none;
+  background: transparent;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  padding: 2px 4px;
+  border-radius: 6px;
+  font-size: 22px;
+  line-height: 1;
+  color: rgba(17, 24, 39, 0.22);
+}
+
+.ui-starBtn.ui-starBtn-plain:hover {
+  background: rgba(17, 24, 39, 0.05);
+}
+
+.ui-starBtn.ui-starBtn-plain.ui-starBtn-active {
+  background: transparent;
+  border: none;
+  color: var(--accent-strong);
+}
+
+.ui-starBtn.ui-starBtn-plain:active {
+  transform: scale(0.92);
+}
+
 /* Inputs */
 .ui-input,
 .ui-textarea {
@@ -234,6 +374,13 @@ body {
   line-height: 1.4;
   padding: 11px 12px;
   transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.ui-input.ui-input-compact {
+  padding: 6px 10px;
+  font-size: 13px;
+  line-height: 1.35;
+  border-radius: 10px;
 }
 
 .ui-input:focus,

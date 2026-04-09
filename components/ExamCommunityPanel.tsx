@@ -33,6 +33,7 @@ export default function ExamCommunityPanel({ schoolId }: Props) {
   const [selectedExamTitle, setSelectedExamTitle] = useState<string | null>(null)
   const [grade, setGrade] = useState<1 | 2 | 3>(2)
   const [showWrite, setShowWrite] = useState(false)
+  const [reviewReloadKey, setReviewReloadKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -141,7 +142,7 @@ export default function ExamCommunityPanel({ schoolId }: Props) {
         </div>
       </Card>
 
-      <ExamAnalysisPanel schoolId={schoolId} examTitle={selectedExamTitle} grade={grade} />
+      <ExamAnalysisPanel schoolId={schoolId} examTitle={selectedExamTitle} grade={grade} reloadKey={reviewReloadKey} />
 
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <Button
@@ -156,7 +157,13 @@ export default function ExamCommunityPanel({ schoolId }: Props) {
 
       {showWrite && (
         <div>
-          <ExamReviewPanel schoolId={schoolId} examTitle={selectedExamTitle} grade={grade} />
+          <ExamReviewPanel
+            schoolId={schoolId}
+            examTitle={selectedExamTitle}
+            grade={grade}
+            onSaved={() => setReviewReloadKey((k) => k + 1)}
+            onDeleted={() => setReviewReloadKey((k) => k + 1)}
+          />
         </div>
       )}
     </div>

@@ -11,14 +11,13 @@ export type ExamAnalysisKey = {
 export type ExamAnalysisStats = {
   reviewCount: number
   difficulty: { avg: number | null; histogram: Record<string, number> }
+  /** DB 필드 grammarCount·writingCount에 매핑 (객관식·서술형) */
   counts: {
-    grammar: { avg: number | null }
-    vocab: { avg: number | null }
-    reading: { avg: number | null }
-    writing: { avg: number | null }
-    listening: { avg: number | null }
-    other: { avg: number | null }
+    mcq: { avg: number | null }
+    subjective: { avg: number | null }
   }
+  /** 집계·요약용 짧은 발췌 (개인 식별 정보 없음) */
+  freeTextExcerpts: string[]
 }
 
 function avg(nums: Array<number | null | undefined>): number | null {
@@ -44,16 +43,22 @@ export async function computeExamAnalysisStats(key: ExamAnalysisKey): Promise<{ 
     select: {
       difficulty: true,
       grammarCount: true,
-      vocabCount: true,
-      readingCount: true,
       writingCount: true,
-      listeningCount: true,
-      otherCount: true,
+      freeText: true,
     },
   })
 
   const diffs = rows.map((r) => r.difficulty)
   const sourceCount = rows.length
+
+  const excerpts: string[] = []
+  for (const r of rows) {
+    const t = (r.freeText ?? '').trim().replace(/\s+/g, ' ')
+    if (!t) continue
+    const slice = t.length > 140 ? `${t.slice(0, 140)}…` : t
+    excerpts.push(slice)
+    if (excerpts.length >= 12) break
+  }
 
   const stats: ExamAnalysisStats = {
     reviewCount: sourceCount,
@@ -62,13 +67,10 @@ export async function computeExamAnalysisStats(key: ExamAnalysisKey): Promise<{ 
       histogram: difficultyHistogram(diffs),
     },
     counts: {
-      grammar: { avg: avg(rows.map((r) => r.grammarCount)) },
-      vocab: { avg: avg(rows.map((r) => r.vocabCount)) },
-      reading: { avg: avg(rows.map((r) => r.readingCount)) },
-      writing: { avg: avg(rows.map((r) => r.writingCount)) },
-      listening: { avg: avg(rows.map((r) => r.listeningCount)) },
-      other: { avg: avg(rows.map((r) => r.otherCount)) },
+      mcq: { avg: avg(rows.map((r) => r.grammarCount)) },
+      subjective: { avg: avg(rows.map((r) => r.writingCount)) },
     },
+    freeTextExcerpts: excerpts,
   }
 
   return { stats, sourceCount }
@@ -86,11 +88,12 @@ async function generateSummaryText(opts: {
   const model = 'claude-sonnet-4-6'
 
   const prompt = `너는 고등학교 내신 분석 교사다.
-아래는 학생들이 구조화로 남긴 통계 요약이다. 이 통계를 바탕으로 선생님이 쓰는 것처럼 한국어로 총평을 작성하라.
+아래는 학생들이 남긴 객관식·서술형 문항 수(자가보고 평균), 체감 난이도, 그리고 자유 후기 발췌다. 통계와 발췌를 바탕으로 선생님이 쓰는 것처럼 한국어로 총평을 작성하라.
 
 조건:
 - 과장하지 말고 데이터에 근거해서 말하기
-- 다음 섹션을 포함: (1) 총평 (2) 난이도 (3) 영역별 특징 (4) 대비/학습 조언
+- 다음 섹션을 포함: (1) 총평 (2) 난이도 (3) 객관식·서술형 비중과 출제 느낌 (4) 대비/학습 조언
+- 자유 후기 발췌에서 반복되는 표현·팁을 요약해 반영하기 (개인을 특정하지 말 것)
 - 불릿/짧은 문단 위주로 8~14줄
 
 대상:
@@ -123,6 +126,18 @@ export async function upsertExamReviewAggregate(opts: {
   generateAiSummary?: boolean
 }): Promise<void> {
   const { stats, sourceCount } = await computeExamAnalysisStats(opts.key)
+
+  if (sourceCount === 0) {
+    await prisma.examReviewAggregate.deleteMany({
+      where: {
+        schoolId: opts.key.schoolId,
+        examTitle: opts.key.examTitle,
+        grade: opts.key.grade,
+      },
+    })
+    return
+  }
+
   const ai = opts.generateAiSummary
     ? await generateSummaryText({
         apiKey: process.env.ANTHROPIC_API_KEY ?? '',
@@ -163,3 +178,19 @@ export async function upsertExamReviewAggregate(opts: {
   })
 }
 
+const AGG_WINDOW_MS = 1000 * 60 * 60 * 24 * 180
+
+/** 후기 저장·수정·삭제 뒤 친구들 평가/분석 집계를 맞춘다. 실패해도 로그만 남기고 본 요청은 성공 처리한다. */
+export async function syncExamReviewAggregateFromReviews(key: ExamAnalysisKey): Promise<void> {
+  try {
+    const now = new Date()
+    await upsertExamReviewAggregate({
+      key,
+      windowStart: new Date(now.getTime() - AGG_WINDOW_MS),
+      windowEnd: now,
+      generateAiSummary: true,
+    })
+  } catch (err) {
+    console.error('[syncExamReviewAggregateFromReviews]', JSON.stringify(key), err)
+  }
+}
