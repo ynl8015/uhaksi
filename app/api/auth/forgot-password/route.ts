@@ -3,9 +3,13 @@ import { prisma } from '@/lib/prisma'
 import { Resend } from 'resend'
 import crypto from 'crypto'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(request: NextRequest) {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    return NextResponse.json({ error: '메일 설정이 필요해요. (RESEND_API_KEY 누락)' }, { status: 500 })
+  }
+  const resend = new Resend(apiKey)
+
   const { email } = await request.json()
   const normalized = typeof email === 'string' ? email.trim().toLowerCase() : ''
 

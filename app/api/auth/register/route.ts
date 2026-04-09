@@ -5,9 +5,13 @@ import { Resend } from 'resend'
 import crypto from 'crypto'
 import { LOGIN_ID_RE, normalizeLoginId } from '@/lib/loginId'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(request: NextRequest) {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    return NextResponse.json({ error: '메일 설정이 필요해요. (RESEND_API_KEY 누락)' }, { status: 500 })
+  }
+  const resend = new Resend(apiKey)
+
   const { loginId, email, password, name } = await request.json()
 
   const rawName = typeof name === 'string' ? name.trim() : ''
