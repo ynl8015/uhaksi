@@ -63,24 +63,20 @@ export default function Home() {
               icon: { src: '/시험.png', alt: '시험 범위' },
               title: '시험범위',
               desc: '친구에게 물어보기 애매한 순간,\n검색 한 번으로 확인해요.',
-              pastel: 'blue' as const,
             },
             {
               icon: { src: '/선생님.png', alt: '선생님/학부모' },
               title: '학원 선생님·학부모',
               desc: '학생에게 묻지 않아도\n시험범위를 정확하게 알아요.',
-              pastel: 'mint' as const,
             },
             {
               icon: { src: '/출제유형.png', alt: '진학 학교 시험 유형' },
               title: '진학할 학교가 궁금할 때',
               desc: '시험 유형이 궁금하다면,\n선배들의 후기를 먼저 봐요.',
-              pastel: 'purple' as const,
             },
           ].map((item) => (
             <Card
               key={item.title}
-              pastel={item.pastel}
               style={{
                 padding: '26px 18px 22px',
                 display: 'flex',
