@@ -65,11 +65,14 @@ model SubjectRange {
 
 model User {
   id            Int       @id @default(autoincrement())
+  loginId       String    @unique
   email         String    @unique
   password      String
   name          String
   emailVerified Boolean   @default(false)
   verifyToken   String?
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
   createdAt     DateTime  @default(now())
 
   examReviews   ExamReview[]

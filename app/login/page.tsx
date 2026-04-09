@@ -1,26 +1,94 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Button from '@/components/ui/Button'
+import { LOGIN_ID_RE, normalizeLoginId } from '@/lib/loginId'
+
+type IdCheck = 'idle' | 'short' | 'invalid' | 'checking' | 'available' | 'taken' | 'error'
 
 function LoginPageInner() {
   const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [loginId, setLoginId] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [idCheck, setIdCheck] = useState<IdCheck>('idle')
+  const checkSeq = useRef(0)
   const router = useRouter()
   const searchParams = useSearchParams()
   const verified = searchParams.get('verified')
   const error = searchParams.get('error')
+  const resetOk = searchParams.get('reset')
+
+  useEffect(() => {
+    if (mode !== 'register') {
+      setIdCheck('idle')
+      return
+    }
+    const raw = loginId.trim()
+    if (!raw) {
+      setIdCheck('idle')
+      return
+    }
+    const norm = normalizeLoginId(loginId)
+    if (norm.length < 4) {
+      setIdCheck('short')
+      return
+    }
+    if (!LOGIN_ID_RE.test(norm)) {
+      setIdCheck('invalid')
+      return
+    }
+
+    setIdCheck('checking')
+    const seq = ++checkSeq.current
+    const t = setTimeout(async () => {
+      if (seq !== checkSeq.current) return
+      try {
+        const r = await fetch('/api/auth/check-login-id', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ loginId: raw }),
+        })
+        let d: { available?: boolean; reason?: string }
+        try {
+          d = await r.json()
+        } catch {
+          if (seq === checkSeq.current) setIdCheck('error')
+          return
+        }
+        if (seq !== checkSeq.current) return
+        if (d.available === true) {
+          setIdCheck('available')
+          return
+        }
+        if (d.reason === 'taken') {
+          setIdCheck('taken')
+          return
+        }
+        if (d.reason === 'format' || d.reason === 'empty') {
+          setIdCheck('invalid')
+          return
+        }
+        setIdCheck('error')
+      } catch {
+        if (seq === checkSeq.current) setIdCheck('error')
+      }
+    }, 420)
+    return () => {
+      clearTimeout(t)
+    }
+  }, [loginId, mode])
 
   const handleLogin = async () => {
     setLoading(true)
     const result = await signIn('credentials', {
-      email,
+      loginId: loginId.trim(),
       password,
       redirect: false,
     })
@@ -28,7 +96,7 @@ function LoginPageInner() {
     if (result?.ok) {
       router.push('/')
     } else {
-      setMessage('이메일 또는 비밀번호가 올바르지 않습니다.')
+      setMessage('아이디 또는 비밀번호가 올바르지 않습니다. (이메일 인증을 마쳤는지도 확인해주세요.)')
     }
     setLoading(false)
   }
@@ -38,7 +106,7 @@ function LoginPageInner() {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name }),
+      body: JSON.stringify({ loginId: loginId.trim(), email: email.trim(), password, name: name.trim() }),
     })
     const data = await res.json()
 
@@ -72,7 +140,9 @@ function LoginPageInner() {
           {mode === 'login' ? '로그인' : '회원가입'}
         </h1>
         <p style={{ color: 'var(--muted)', fontSize: '14px', marginBottom: '22px', lineHeight: 1.6 }}>
-          {mode === 'login' ? '우리학교시험에 오신걸 환영해요' : '이메일로 가입하고 시험 정보를 공유해요'}
+          {mode === 'login'
+            ? '우리학교시험에 오신걸 환영해요'
+            : '아이디·이메일로 가입하고, 이메일로 인증을 완료해 주세요'}
         </p>
 
         {verified && (
@@ -107,6 +177,22 @@ function LoginPageInner() {
           </div>
         )}
 
+        {resetOk === 'ok' && (
+          <div
+            style={{
+              background: 'var(--pastel-mint)',
+              border: '1px solid rgba(17, 24, 39, 0.08)',
+              borderRadius: '14px',
+              padding: '12px 14px',
+              marginBottom: '16px',
+              color: 'var(--text)',
+              fontSize: '14px',
+            }}
+          >
+            비밀번호가 변경됐어요. 새 비밀번호로 로그인해주세요.
+          </div>
+        )}
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
           {mode === 'register' && (
             <input
@@ -118,14 +204,61 @@ function LoginPageInner() {
               style={inputStyle}
             />
           )}
-          <input
-            className="ui-input"
-            type="email"
-            placeholder="이메일"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={inputStyle}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <input
+              className="ui-input"
+              type="text"
+              placeholder={mode === 'login' ? '아이디' : '아이디 (소문자·숫자, 4~20자)'}
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              style={inputStyle}
+            />
+            {mode === 'register' ? (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '12px',
+                  minHeight: '17px',
+                  lineHeight: 1.45,
+                  color:
+                    idCheck === 'available'
+                      ? '#15803d'
+                      : idCheck === 'taken' || idCheck === 'invalid'
+                        ? '#b91c1c'
+                        : idCheck === 'error'
+                          ? '#b45309'
+                          : 'var(--muted)',
+                  fontWeight:
+                    idCheck === 'available' || idCheck === 'taken' || idCheck === 'error' ? 600 : 500,
+                }}
+              >
+                {idCheck === 'idle' ? '\u00a0' : null}
+                {idCheck === 'short' ? '아이디는 4자 이상 입력해주세요.' : null}
+                {idCheck === 'invalid'
+                  ? '영문 소문자와 숫자만 4~20자로 입력해 주세요. (밑줄 _ 은 넣어도 되고 생략해도 돼요.)'
+                  : null}
+                {idCheck === 'checking' ? '아이디 확인 중…' : null}
+                {idCheck === 'available' ? '사용할 수 있는 아이디예요.' : null}
+                {idCheck === 'taken' ? '이미 사용 중인 아이디예요.' : null}
+                {idCheck === 'error'
+                  ? '아이디 확인에 실패했어요. 잠시 후 다시 시도해 주세요.'
+                  : null}
+              </p>
+            ) : null}
+          </div>
+          {mode === 'register' && (
+            <input
+              className="ui-input"
+              type="email"
+              placeholder="이메일 주소 (인증·비밀번호 찾기에 사용)"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={inputStyle}
+            />
+          )}
           <input
             className="ui-input"
             type="password"
@@ -137,6 +270,12 @@ function LoginPageInner() {
           />
         </div>
 
+        {mode === 'register' && (
+          <p style={{ margin: '-8px 0 16px', fontSize: '12px', color: 'var(--muted)', lineHeight: 1.5 }}>
+            <b>아이디</b>는 우리 서비스용이며 <b>이메일</b>은 인증용으로 사용됩니다.
+          </p>
+        )}
+
         {message && (
           <p style={{ color: 'var(--accent-strong)', fontSize: '14px', marginBottom: '16px' }}>
             {message}
@@ -145,17 +284,41 @@ function LoginPageInner() {
 
         <Button
           onClick={mode === 'login' ? handleLogin : handleRegister}
-          disabled={loading}
+          disabled={
+            loading ||
+            (mode === 'register' &&
+              (idCheck !== 'available' ||
+                !name.trim() ||
+                !email.trim().includes('@') ||
+                password.length < 8))
+          }
           variant="primary"
           style={{ width: '100%', padding: '12px', fontSize: '15px', marginBottom: '16px' }}
         >
           {loading ? '처리 중...' : mode === 'login' ? '로그인' : '회원가입'}
         </Button>
 
+        {mode === 'login' && (
+          <p style={{ textAlign: 'center', fontSize: '13px', color: 'var(--muted)', marginBottom: '14px', lineHeight: 1.6 }}>
+            <Link href="/forgot?tab=id" style={{ color: 'var(--accent-strong)', fontWeight: 800, textDecoration: 'none' }}>
+              아이디 찾기
+            </Link>
+            <span style={{ margin: '0 10px', opacity: 0.45 }}>|</span>
+            <Link href="/forgot?tab=password" style={{ color: 'var(--accent-strong)', fontWeight: 800, textDecoration: 'none' }}>
+              비밀번호 찾기
+            </Link>
+          </p>
+        )}
+
         <p style={{ textAlign: 'center', fontSize: '14px', color: 'var(--muted)' }}>
           {mode === 'login' ? '아직 계정이 없으신가요? ' : '이미 계정이 있으신가요? '}
           <button
-            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setMessage('') }}
+            type="button"
+            onClick={() => {
+              setMode(mode === 'login' ? 'register' : 'login')
+              setMessage('')
+              if (mode === 'login') setIdCheck('idle')
+            }}
             style={{ background: 'none', border: 'none', color: 'var(--accent-strong)', cursor: 'pointer', fontSize: '14px', fontWeight: 900 }}
           >
             {mode === 'login' ? '회원가입' : '로그인'}

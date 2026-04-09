@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
-import { authOptions } from '@/lib/auth'
 import { syncExamReviewAggregateFromReviews } from '@/lib/examAnalysis'
+import { getSessionUserId } from '@/lib/sessionUser'
 
 function toInt(v: string | null): number | null {
   if (v === null) return null
@@ -26,11 +25,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'schoolId, examTitle, grade are required' }, { status: 400 })
   }
 
-  const session = await getServerSession(authOptions)
-  const userEmail = session?.user?.email ?? null
-  const user = userEmail
-    ? await prisma.user.findUnique({ where: { email: userEmail }, select: { id: true } })
-    : null
+  const uid = await getSessionUserId()
+  const user = uid ? await prisma.user.findUnique({ where: { id: uid }, select: { id: true } }) : null
 
   const mine = user
     ? await prisma.examReview.findUnique({
@@ -59,13 +55,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-  const userEmail = session?.user?.email
-  if (!userEmail) {
+  const uid = await getSessionUserId()
+  if (!uid) {
     return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
   }
 
-  const user = await prisma.user.findUnique({ where: { email: userEmail }, select: { id: true } })
+  const user = await prisma.user.findUnique({ where: { id: uid }, select: { id: true } })
   if (!user) {
     return NextResponse.json({ error: '유저를 찾을 수 없습니다.' }, { status: 404 })
   }
