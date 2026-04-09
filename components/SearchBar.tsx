@@ -62,7 +62,8 @@ export default function SearchBar() {
         <input
           className="ui-input"
           type="text"
-          value={query}
+          value={isNavigating ? '이동 중...' : query}
+          disabled={isNavigating}
           onChange={(e) => {
             const next = e.target.value
             setIsNavigating(false)
@@ -79,13 +80,14 @@ export default function SearchBar() {
             borderRadius: '14px',
             fontSize: '15px',
             boxShadow: 'var(--ui-shadow)',
+            opacity: isNavigating ? 0.6 : 1,
           }}
         />
         <Button onClick={handleSearch} variant="primary" style={{ padding: '11px 18px', borderRadius: '14px', fontSize: '15px' }}>
-          검색
+          {isNavigating ? '이동 중...' : '검색'}
         </Button>
 
-        {show && results.length > 0 && (
+        {show && results.length > 0 && !isNavigating && (
           <ul style={{
             position: 'absolute',
             top: 'calc(100% + 4px)',
