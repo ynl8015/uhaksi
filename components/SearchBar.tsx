@@ -14,11 +14,16 @@ export default function SearchBar() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<School[]>([])
   const [show, setShow] = useState(false)
+  const [skipNext, setSkipNext] = useState(false)
   const router = useRouter()
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (query.length < 1) return
+    if (skipNext) {
+      setSkipNext(false)
+      return
+    }
     const timer = setTimeout(async () => {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
       const data = await res.json()
@@ -26,9 +31,10 @@ export default function SearchBar() {
       setShow(true)
     }, 300)
     return () => clearTimeout(timer)
-  }, [query])
+  }, [query, skipNext])
 
   const handleSelect = (school: School) => {
+    setSkipNext(true)
     setShow(false)
     setQuery(school.name)
     router.push(`/school/${school.id}`)
@@ -37,15 +43,15 @@ export default function SearchBar() {
   const handleSearch = async () => {
     if (!query.trim()) return
     setShow(false)
-  
+
     if (results.length > 0) {
       router.push(`/school/${results[0].id}`)
       return
     }
-  
+
     const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
     const data = await res.json()
-  
+
     if (data.length > 0) {
       router.push(`/school/${data[0].id}`)
     } else {
