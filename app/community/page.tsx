@@ -128,77 +128,25 @@ export default async function CommunityPage({ searchParams }: SearchProps) {
   if (!u) {
     return (
       <CommunityGateLayout>
-        <div
-          style={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: 320,
-            aspectRatio: '4 / 3',
-            margin: '0 auto 28px',
-          }}
-        >
           <Image
-            src="/학생.png"
+            src="/student-community-hero.png"
             alt="학생 캐릭터 일러스트"
-            fill
-            sizes="320px"
+            width={260}
+            height={200}
+            sizes="(max-width: 480px) 85vw, 260px"
             priority
-            style={{ objectFit: 'contain' }}
+            style={{
+              display: 'block',
+              width: 'min(260px, 100%)',
+              height: 'auto',
+              objectFit: 'contain',
+              marginBottom: '18px',
+              filter: 'drop-shadow(0 10px 22px rgba(17, 24, 39, 0.1))',
+            }}
           />
-        </div>
-        <p
-          style={{
-            margin: '0 0 10px',
-            fontSize: '20px',
-            fontWeight: 800,
-            letterSpacing: '-0.45px',
-            lineHeight: 1.45,
-            color: gateTitle,
-          }}
-        >
-          이곳은 학생들만을 위한 공간입니다
-        </p>
-        <p
-          style={{
-            margin: '0 0 28px',
-            fontSize: '15px',
-            lineHeight: 1.65,
-            color: gateMuted,
-            fontWeight: 500,
-          }}
-        >
-          로그인해 주세요
-        </p>
-        <Link
-          href="/login"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: '200px',
-            padding: '12px 22px',
-            fontSize: '15px',
-            fontWeight: 700,
-            color: '#ffffff',
-            background: 'var(--accent-strong, #ea580c)',
-            borderRadius: '999px',
-            textDecoration: 'none',
-            boxShadow: '0 2px 10px rgba(234, 88, 12, 0.28)',
-          }}
-        >
-          로그인
-        </Link>
-      </CommunityGateLayout>
-    )
-  }
-
-  if (!canAccessStudentCommunity(u)) {
-    if (u.accountKind !== 'STUDENT') {
-      return (
-        <CommunityGateLayout>
           <p
             style={{
-              margin: '0 0 10px',
+              margin: '0 0 8px',
               fontSize: '20px',
               fontWeight: 800,
               letterSpacing: '-0.45px',
@@ -206,13 +154,21 @@ export default async function CommunityPage({ searchParams }: SearchProps) {
               color: gateTitle,
             }}
           >
-            학생 회원 전용이에요
+            이곳은 학생들만을 위한 공간입니다
           </p>
-          <p style={{ margin: '0 0 28px', fontSize: '15px', lineHeight: 1.65, color: gateMuted, fontWeight: 500 }}>
-            커뮤니티는 가입 시 학생으로 선택하고, 학생증 인증을 마친 분만 이용할 수 있어요.
+          <p
+            style={{
+              margin: '0 0 22px',
+              fontSize: '15px',
+              lineHeight: 1.65,
+              color: gateMuted,
+              fontWeight: 500,
+            }}
+          >
+            로그인해 주세요
           </p>
           <Link
-            href="/"
+            href="/login"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -221,54 +177,96 @@ export default async function CommunityPage({ searchParams }: SearchProps) {
               padding: '12px 22px',
               fontSize: '15px',
               fontWeight: 700,
-              color: '#374151',
-              background: '#ffffff',
-              border: `1px solid ${shell.line}`,
+              color: '#ffffff',
+              background: 'var(--accent-strong, #ea580c)',
               borderRadius: '999px',
               textDecoration: 'none',
+              boxShadow: '0 2px 10px rgba(234, 88, 12, 0.28)',
             }}
           >
-            홈으로
+            로그인
           </Link>
+      </CommunityGateLayout>
+    )
+  }
+
+  if (!canAccessStudentCommunity(u)) {
+    if (u.accountKind !== 'STUDENT') {
+      return (
+        <CommunityGateLayout>
+            <p
+              style={{
+                margin: '0 0 8px',
+                fontSize: '20px',
+                fontWeight: 800,
+                letterSpacing: '-0.45px',
+                lineHeight: 1.45,
+                color: gateTitle,
+              }}
+            >
+              학생 회원 전용이에요
+            </p>
+            <p style={{ margin: '0 0 22px', fontSize: '15px', lineHeight: 1.65, color: gateMuted, fontWeight: 500 }}>
+              커뮤니티는 가입 시 학생으로 선택하고, 학생증 인증을 마친 분만 이용할 수 있어요.
+            </p>
+            <Link
+              href="/"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '200px',
+                padding: '12px 22px',
+                fontSize: '15px',
+                fontWeight: 700,
+                color: '#374151',
+                background: '#ffffff',
+                border: `1px solid ${shell.line}`,
+                borderRadius: '999px',
+                textDecoration: 'none',
+              }}
+            >
+              홈으로
+            </Link>
         </CommunityGateLayout>
       )
     }
     return (
       <CommunityGateLayout>
-        <p
-          style={{
-            margin: '0 0 10px',
-            fontSize: '20px',
-            fontWeight: 800,
-            letterSpacing: '-0.45px',
-            lineHeight: 1.45,
-            color: gateTitle,
-          }}
-        >
-          학생증 인증이 필요해요
-        </p>
-        <p style={{ margin: '0 0 28px', fontSize: '15px', lineHeight: 1.65, color: gateMuted, fontWeight: 500 }}>
-          상단 프로필의 <strong style={{ color: '#374151' }}>미인증</strong>을 누르거나, 인증 페이지에서 학생증 사진을 올려 주세요.
-        </p>
-        <Link
-          href="/account/verify"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: '200px',
-            padding: '12px 22px',
-            fontSize: '15px',
-            fontWeight: 700,
-            color: '#ffffff',
-            background: 'var(--accent-strong, #ea580c)',
-            borderRadius: '999px',
-            textDecoration: 'none',
-            boxShadow: '0 2px 10px rgba(234, 88, 12, 0.28)',
-          }}
-        >
-          학생증 인증하기
-        </Link>
+          <p
+            style={{
+              margin: '0 0 8px',
+              fontSize: '20px',
+              fontWeight: 800,
+              letterSpacing: '-0.45px',
+              lineHeight: 1.45,
+              color: gateTitle,
+            }}
+          >
+            학생증 인증이 필요해요
+          </p>
+          <p style={{ margin: '0 0 22px', fontSize: '15px', lineHeight: 1.65, color: gateMuted, fontWeight: 500 }}>
+            상단 프로필의 <strong style={{ color: '#374151' }}>미인증</strong>을 누르거나, 인증 페이지에서 학생증 사진을 올려 주세요.
+          </p>
+          <Link
+            href="/account/verify"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '200px',
+              padding: '12px 22px',
+              fontSize: '15px',
+              fontWeight: 700,
+              color: '#ffffff',
+              background: 'var(--accent-strong, #ea580c)',
+              borderRadius: '999px',
+              textDecoration: 'none',
+              boxShadow: '0 2px 10px rgba(234, 88, 12, 0.28)',
+            }}
+          >
+            학생증 인증하기
+          </Link>
       </CommunityGateLayout>
     )
   }

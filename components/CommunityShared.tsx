@@ -51,7 +51,16 @@ export function PersonGlyph({ size = 15 }: { size?: number }) {
   )
 }
 
-export function CommunityMetaRow({ school, date }: { school: string; date: string }) {
+export function CommunityMetaRow({
+  school,
+  date,
+  tightTop,
+}: {
+  school: string
+  date: string
+  /** 제목 바로 아래 한 줄 레이아웃에서 위쪽 여백을 줄일 때 */
+  tightTop?: boolean
+}) {
   return (
     <div
       style={{
@@ -61,7 +70,7 @@ export function CommunityMetaRow({ school, date }: { school: string; date: strin
         gap: '6px 10px',
         fontSize: '12px',
         color: '#6b7280',
-        marginTop: '6px',
+        marginTop: tightTop ? 0 : '6px',
       }}
     >
       <PersonGlyph />
