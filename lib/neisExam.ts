@@ -44,9 +44,20 @@ function inferExamType(name: string): 'mid' | 'final' | 'written' | null {
 
 function shouldExclude(name: string): boolean {
   // "시험"이라는 단어가 들어가도 실제 시험일(지필고사)과 무관한 안내/준비/성적/범위 공지가 섞여 들어옵니다.
-  return /(안내|가정통신문|범위|시간표|성적|결과|제출|신청|접수|대비|준비|보충|재시험|추가\s*시험|예비|계획|공고)/.test(
-    name
-  )
+  if (
+    /(안내|가정통신문|범위|시간표|성적|결과|제출|신청|접수|대비|준비|보충|재시험|추가\s*시험|예비|계획|공고)/.test(
+      name
+    )
+  ) {
+    return true
+  }
+  // "모의고사"에만 걸리는 '고사' 때문에 inferExamType('written') → 월 기준 중간/기말로 오인되는 일 방지
+  if (
+    /모의고사|사설|전국연합|연합학력평가|모의평가|대학수학능력시험|교육청\s*모의/.test(name)
+  ) {
+    return true
+  }
+  return false
 }
 
 function isAllGradesEvent(name: string): boolean {
