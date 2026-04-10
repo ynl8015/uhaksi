@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs'
 import { Resend } from 'resend'
 import crypto from 'crypto'
 import { LOGIN_ID_RE, normalizeLoginId } from '@/lib/loginId'
+import { RESEND_FROM, RESEND_REPLY_TO } from '@/lib/resendFrom'
 import type { AccountKind } from '@/types/accountKind'
 
 export async function POST(request: NextRequest) {
@@ -69,10 +70,21 @@ export async function POST(request: NextRequest) {
 
   const verifyUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify?token=${verifyToken}`
 
+  const verifyText = [
+    '이메일 인증',
+    '',
+    '아래 링크를 브라우저 주소창에 붙여 넣어 인증을 완료해 주세요.',
+    verifyUrl,
+    '',
+    '링크는 24시간 동안 유효합니다.',
+  ].join('\n')
+
   await resend.emails.send({
-    from: 'noreply@uhaksi.kr',
+    from: RESEND_FROM,
+    replyTo: RESEND_REPLY_TO,
     to: emailNorm,
     subject: '우리학교시험 이메일 인증',
+    text: verifyText,
     html: `
       <h2>이메일 인증</h2>
       <p>아래 버튼을 클릭해서 이메일 인증을 완료해주세요.</p>
@@ -80,6 +92,7 @@ export async function POST(request: NextRequest) {
         이메일 인증하기
       </a>
       <p style="color:#888;font-size:12px;margin-top:16px;">링크는 24시간 동안 유효합니다.</p>
+      <p style="color:#888;font-size:12px;margin-top:8px;">버튼이 안 보이면 이 링크를 복사해 주세요:<br/>${verifyUrl}</p>
     `,
   })
 

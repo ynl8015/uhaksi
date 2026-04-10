@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { RESEND_FROM, RESEND_REPLY_TO } from '@/lib/resendFrom'
 import { Resend } from 'resend'
 import crypto from 'crypto'
 
@@ -22,10 +23,9 @@ export async function POST(request: NextRequest) {
     select: { id: true, emailVerified: true },
   })
 
-  // 존재·미인증 여부를 응답으로 구분하지 않음(계정 노출 방지). 다만 실제로는 이 경우 메일을 보내지 않음.
+  // 존재·미인증 여부를 응답으로 구분하지 않음 (동일 메시지)
   const generic = {
-    message:
-      '요청은 접수됐어요. 가입한 이메일이 맞고, 가입 후 이메일 인증까지 마친 계정에만 재설정 메일이 발송돼요. 해당된다면 1~2분 뒤 받은편지함·스팸함을 확인해 주세요. (미가입·인증 전이면 메일은 가지 않아요.)',
+    message: '입력하신 이메일로 안내가 필요하면 메일을 보냈어요. 받은편지함을 확인해주세요.',
   }
 
   if (!user || !user.emailVerified) {
@@ -47,10 +47,21 @@ export async function POST(request: NextRequest) {
   const resetUrl = `${base}/reset-password?token=${encodeURIComponent(token)}`
 
   try {
+    const text = [
+      '비밀번호 재설정',
+      '',
+      '아래 링크를 브라우저 주소창에 붙여 넣어 새 비밀번호를 설정해 주세요.',
+      resetUrl,
+      '',
+      '링크는 1시간 동안만 유효합니다. 본인이 요청하지 않았다면 이 메일은 무시하셔도 됩니다.',
+    ].join('\n')
+
     await resend.emails.send({
-      from: 'noreply@uhaksi.kr',
+      from: RESEND_FROM,
+      replyTo: RESEND_REPLY_TO,
       to: normalized,
       subject: '우리학교시험 비밀번호 재설정',
+      text,
       html: `
         <h2>비밀번호 재설정</h2>
         <p>아래 버튼을 눌러 새 비밀번호를 설정해주세요.</p>
@@ -58,6 +69,7 @@ export async function POST(request: NextRequest) {
           비밀번호 재설정하기
         </a>
         <p style="color:#888;font-size:12px;margin-top:16px;">링크는 1시간 동안만 유효합니다. 본인이 요청하지 않았다면 이 메일은 무시해도 돼요.</p>
+        <p style="color:#888;font-size:12px;margin-top:8px;">버튼이 안 보이면 이 링크를 복사해 주세요:<br/>${resetUrl}</p>
       `,
     })
   } catch {

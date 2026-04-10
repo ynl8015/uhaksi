@@ -175,8 +175,7 @@ function ForgotInner() {
               {loading ? '발송 중…' : '재설정 링크 보내기'}
             </Button>
             <p style={{ margin: 0, fontSize: '12px', color: 'var(--muted)', lineHeight: 1.55 }}>
-              <b>이메일 인증을 마친 계정</b>에만 재설정 메일이 갑니다. 인증 전이거나 없는 이메일이면 발송되지 않아요. 링크는{' '}
-              <b>1시간</b> 동안만 유효해요.
+              인증을 마친 계정만 메일이 발송돼요. 메일의 링크는 1시간 동안 유효해요.
             </p>
           </div>
         )}
