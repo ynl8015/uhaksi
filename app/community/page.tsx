@@ -98,17 +98,21 @@ function CommunityGateLayout({ children }: { children: ReactNode }) {
       style={{
         minHeight: 'calc(100vh - 64px)',
         background: shell.pageBg,
-        padding: '36px 20px 48px',
+        padding: '24px 20px',
         display: 'flex',
-        alignItems: 'flex-start',
+        flexDirection: 'column',
+        alignItems: 'center',
         justifyContent: 'center',
+        boxSizing: 'border-box',
       }}
     >
       <div
         style={{
           width: '100%',
           maxWidth: '440px',
-          marginTop: '8vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
           textAlign: 'center',
         }}
       >
@@ -131,7 +135,8 @@ export default async function CommunityPage({ searchParams }: SearchProps) {
           <div
             style={{
               width: 'min(100%, 380px)',
-              margin: '0 auto 18px',
+              maxWidth: '100%',
+              marginBottom: '18px',
             }}
           >
             <Image
@@ -153,6 +158,7 @@ export default async function CommunityPage({ searchParams }: SearchProps) {
           <p
             style={{
               margin: '0 0 8px',
+              width: '100%',
               fontSize: '20px',
               fontWeight: 800,
               letterSpacing: '-0.45px',
@@ -165,6 +171,7 @@ export default async function CommunityPage({ searchParams }: SearchProps) {
           <p
             style={{
               margin: '0 0 22px',
+              width: '100%',
               fontSize: '15px',
               lineHeight: 1.65,
               color: gateMuted,
@@ -203,6 +210,7 @@ export default async function CommunityPage({ searchParams }: SearchProps) {
             <p
               style={{
                 margin: '0 0 8px',
+                width: '100%',
                 fontSize: '20px',
                 fontWeight: 800,
                 letterSpacing: '-0.45px',
@@ -212,7 +220,16 @@ export default async function CommunityPage({ searchParams }: SearchProps) {
             >
               학생 회원 전용이에요
             </p>
-            <p style={{ margin: '0 0 22px', fontSize: '15px', lineHeight: 1.65, color: gateMuted, fontWeight: 500 }}>
+            <p
+              style={{
+                margin: '0 0 22px',
+                width: '100%',
+                fontSize: '15px',
+                lineHeight: 1.65,
+                color: gateMuted,
+                fontWeight: 500,
+              }}
+            >
               커뮤니티는 가입 시 학생으로 선택하고, 학생증 인증을 마친 분만 이용할 수 있어요.
             </p>
             <Link
@@ -242,6 +259,7 @@ export default async function CommunityPage({ searchParams }: SearchProps) {
           <p
             style={{
               margin: '0 0 8px',
+              width: '100%',
               fontSize: '20px',
               fontWeight: 800,
               letterSpacing: '-0.45px',
@@ -251,7 +269,16 @@ export default async function CommunityPage({ searchParams }: SearchProps) {
           >
             학생증 인증이 필요해요
           </p>
-          <p style={{ margin: '0 0 22px', fontSize: '15px', lineHeight: 1.65, color: gateMuted, fontWeight: 500 }}>
+          <p
+            style={{
+              margin: '0 0 22px',
+              width: '100%',
+              fontSize: '15px',
+              lineHeight: 1.65,
+              color: gateMuted,
+              fontWeight: 500,
+            }}
+          >
             상단 프로필의 <strong style={{ color: '#374151' }}>미인증</strong>을 누르거나, 인증 페이지에서 학생증 사진을 올려 주세요.
           </p>
           <Link
