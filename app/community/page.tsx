@@ -128,22 +128,28 @@ export default async function CommunityPage({ searchParams }: SearchProps) {
   if (!u) {
     return (
       <CommunityGateLayout>
-          <Image
-            src="/student-community-hero.png"
-            alt="학생 캐릭터 일러스트"
-            width={260}
-            height={200}
-            sizes="(max-width: 480px) 85vw, 260px"
-            priority
+          <div
             style={{
-              display: 'block',
-              width: 'min(260px, 100%)',
-              height: 'auto',
-              objectFit: 'contain',
-              marginBottom: '18px',
-              filter: 'drop-shadow(0 10px 22px rgba(17, 24, 39, 0.1))',
+              width: 'min(100%, 380px)',
+              margin: '0 auto 18px',
             }}
-          />
+          >
+            <Image
+              src="/student-community-hero.png"
+              alt="학생 캐릭터 일러스트"
+              width={622}
+              height={294}
+              sizes="(max-width: 480px) 90vw, 380px"
+              priority
+              fetchPriority="high"
+              style={{
+                display: 'block',
+                width: '100%',
+                height: 'auto',
+                filter: 'drop-shadow(0 10px 22px rgba(17, 24, 39, 0.1))',
+              }}
+            />
+          </div>
           <p
             style={{
               margin: '0 0 8px',

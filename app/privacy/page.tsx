@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { SITE_CONTACT_EMAIL } from '@/lib/siteContact'
 
 export const metadata: Metadata = {
@@ -23,11 +22,6 @@ const li: CSSProperties = { marginBottom: '6px' }
 export default function PrivacyPage() {
   return (
     <main style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 24px 56px' }}>
-      <p style={{ margin: '0 0 20px' }}>
-        <Link href="/" style={{ fontSize: '13px', fontWeight: 700, color: 'var(--muted)', textDecoration: 'none' }}>
-          ← 홈
-        </Link>
-      </p>
       <h1 style={{ margin: '0 0 8px', fontSize: '22px', fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.4px' }}>
         개인정보처리방침
       </h1>
