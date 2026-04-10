@@ -20,17 +20,35 @@ export const communityShell = {
 
 const COMMUNITY_TIMEZONE = 'Asia/Seoul' as const
 
+const communityDateFormatter = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: COMMUNITY_TIMEZONE,
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+})
+
 /** 서버(UTC)·클라이언트(로컬)와 무관하게 항상 한국 표준시로 표시 */
 export function formatCommunityDate(iso: string) {
   const d = new Date(iso)
-  return d.toLocaleString('ko-KR', {
-    timeZone: COMMUNITY_TIMEZONE,
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  if (Number.isNaN(d.getTime())) return ''
+  return communityDateFormatter.format(d)
+}
+
+const COMMUNITY_PREVIEW_MAX = 300
+
+/** 공백·줄바꿈 포함 글자 수 기준(이모지 등은 Array.from 기준 1글자) */
+export function truncateCommunityBodyPreview(
+  body: string,
+  maxChars: number = COMMUNITY_PREVIEW_MAX,
+): { preview: string; truncated: boolean } {
+  const chars = Array.from(body)
+  if (chars.length <= maxChars) {
+    return { preview: body, truncated: false }
+  }
+  return { preview: chars.slice(0, maxChars).join(''), truncated: true }
 }
 
 export function PersonGlyph({ size = 15 }: { size?: number }) {

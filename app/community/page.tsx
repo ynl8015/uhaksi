@@ -8,6 +8,7 @@ import {
   COMMUNITY_TAB_LABELS,
   CommunityMetaRow,
   communityShell as shell,
+  truncateCommunityBodyPreview,
 } from '@/components/CommunityShared'
 import { canAccessStudentCommunity } from '@/lib/communityAccess'
 import {
@@ -25,6 +26,7 @@ type SearchProps = {
 function CommunityPostCard({ post }: { post: CommunityFeedPost }) {
   const displayTitle = post.title?.trim() || '제목 없음'
   const titleMuted = !post.title?.trim()
+  const { preview, truncated } = truncateCommunityBodyPreview(post.body)
 
   return (
     <Link
@@ -63,13 +65,14 @@ function CommunityPostCard({ post }: { post: CommunityFeedPost }) {
             fontSize: '14px',
             lineHeight: 1.65,
             color: '#4b5563',
-            overflow: 'hidden',
-            display: '-webkit-box',
-            WebkitBoxOrient: 'vertical',
-            WebkitLineClamp: 4,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
           }}
         >
-          {post.body}
+          {preview}
+          {truncated ? (
+            <span style={{ fontWeight: 700, color: '#6b7280' }}>...더보기</span>
+          ) : null}
         </div>
 
         {post.imageData ? (
