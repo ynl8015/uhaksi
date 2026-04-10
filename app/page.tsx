@@ -1,4 +1,5 @@
 import SearchBar from '@/components/SearchBar'
+import WebSiteJsonLd from '@/components/WebSiteJsonLd'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Image from 'next/image'
@@ -6,6 +7,7 @@ import Image from 'next/image'
 export default function Home() {
   return (
     <main>
+      <WebSiteJsonLd />
       <section
         style={{
           background: 'var(--pastel-yellow)',

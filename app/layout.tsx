@@ -5,23 +5,40 @@ import Link from 'next/link'
 import Providers from '@/components/Providers'
 import AuthButton from '@/components/AuthButton'
 import SiteFooter from '@/components/SiteFooter'
+import { getSiteUrl } from '@/lib/siteUrl'
 import appIcon from './icon.png'
 
+const siteDescription = '전국 고등학교 시험 범위, 교재, 출제 유형을 공유하는 서비스'
+
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: '우리학교시험 | 학교 시험 정보 공유',
-  description: '전국 고등학교 시험 범위, 교재, 출제 유형을 공유하는 서비스',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  description: siteDescription,
+  keywords: ['고등학교', '시험', '시험범위', '내신', '학교시험', '우리학교시험'],
   icons: {
     icon: '/favicon.ico',
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
   openGraph: {
     title: '우리학교시험 | 학교 시험 정보 공유',
-    description: '전국 고등학교 시험 범위, 교재, 출제 유형을 공유하는 서비스',
+    description: siteDescription,
     url: '/',
     siteName: '우리학교시험',
     locale: 'ko_KR',
     type: 'website',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: '우리학교시험 | 학교 시험 정보 공유',
+    description: siteDescription,
+  },
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
 }
 
 export default function RootLayout({
