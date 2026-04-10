@@ -37,7 +37,7 @@ export function formatCommunityDate(iso: string) {
   return communityDateFormatter.format(d)
 }
 
-const COMMUNITY_PREVIEW_MAX = 300
+const COMMUNITY_PREVIEW_MAX = 100
 
 /** 공백·줄바꿈 포함 글자 수 기준(이모지 등은 Array.from 기준 1글자) */
 export function truncateCommunityBodyPreview(
