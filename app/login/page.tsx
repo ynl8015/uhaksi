@@ -278,8 +278,8 @@ function LoginPageInner() {
             />
           )}
           {mode === 'register' && (
-            <div style={{ marginTop: '4px' }}>
-              <p style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 800, color: 'var(--text)' }}>
+            <div style={{ marginTop: '4px', width: '100%' }}>
+              <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 800, color: 'var(--text)' }}>
                 계정 유형
               </p>
               <label
@@ -288,9 +288,12 @@ function LoginPageInner() {
                   alignItems: 'flex-start',
                   gap: '10px',
                   cursor: 'pointer',
-                  fontSize: '14px',
+                  width: '100%',
+                  minWidth: 0,
+                  boxSizing: 'border-box',
+                  fontSize: '11px',
                   color: 'var(--text)',
-                  lineHeight: 1.5,
+                  lineHeight: 1.45,
                   marginBottom: '8px',
                 }}
               >
@@ -299,9 +302,9 @@ function LoginPageInner() {
                   name="accountKind"
                   checked={accountKind === 'STUDENT'}
                   onChange={() => setAccountKind('STUDENT')}
-                  style={{ marginTop: '3px' }}
+                  style={{ marginTop: '2px', flexShrink: 0 }}
                 />
-                <span>
+                <span style={{ wordBreak: 'keep-all', minWidth: 0, flex: 1 }}>
                   <b>학생</b> (중·고등학교){' '}
                   <span style={{ color: 'var(--muted)', fontWeight: 500 }}>
                     — 커뮤니티 이용 가능, 가입 후 학생증 인증이 필요해요.
@@ -314,9 +317,12 @@ function LoginPageInner() {
                   alignItems: 'flex-start',
                   gap: '10px',
                   cursor: 'pointer',
-                  fontSize: '14px',
+                  width: '100%',
+                  minWidth: 0,
+                  boxSizing: 'border-box',
+                  fontSize: '11px',
                   color: 'var(--text)',
-                  lineHeight: 1.5,
+                  lineHeight: 1.45,
                 }}
               >
                 <input
@@ -324,9 +330,9 @@ function LoginPageInner() {
                   name="accountKind"
                   checked={accountKind === 'OTHER'}
                   onChange={() => setAccountKind('OTHER')}
-                  style={{ marginTop: '3px' }}
+                  style={{ marginTop: '2px', flexShrink: 0 }}
                 />
-                <span>
+                <span style={{ wordBreak: 'keep-all', minWidth: 0, flex: 1 }}>
                   <b>그 외</b>{' '}
                   <span style={{ color: 'var(--muted)', fontWeight: 500 }}>
                     — 시험 정보 검색·이용은 가능하고, 학생 커뮤니티는 이용할 수 없어요.
