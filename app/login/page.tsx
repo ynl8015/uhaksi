@@ -204,14 +204,20 @@ function LoginPageInner() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
           {mode === 'register' && (
-            <input
-              className="ui-input"
-              type="text"
-              placeholder="이름 (예: 홍길동)"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={inputStyle}
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <input
+                className="ui-input"
+                type="text"
+                placeholder="이름 (예: 홍길동)"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                style={inputStyle}
+              />
+              <p style={{ margin: 0, fontSize: '12px', lineHeight: 1.5, color: 'var(--muted)', fontWeight: 500 }}>
+                이름은 <b style={{ color: 'var(--text)' }}>본명</b>을 사용해 주세요. 이후 학생증 인증 시 가입 정보와
+                같아야 해요.
+              </p>
+            </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <input

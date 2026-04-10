@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { verifyStudentIdWithVision } from '@/lib/visionModeration'
+import { normalizePersonNameForMatch } from '@/lib/personName'
 
 const MAX_BYTES = 5 * 1024 * 1024
 
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { accountKind: true, studentVerifiedAt: true, isAdmin: true },
+    select: { accountKind: true, studentVerifiedAt: true, isAdmin: true, name: true },
   })
 
   if (!user) {
@@ -64,9 +65,21 @@ export async function POST(request: NextRequest) {
   const mediaType = type as 'image/jpeg' | 'image/png' | 'image/webp'
 
   const vision = await verifyStudentIdWithVision(base64, mediaType)
-  if (!vision.ok || !vision.schoolName) {
+  if (!vision.ok || !vision.schoolName || !vision.studentName) {
     return NextResponse.json(
       { error: vision.reason || '학생증으로 확인되지 않았어요. 더 선명한 사진으로 다시 시도해 주세요.' },
+      { status: 400 },
+    )
+  }
+
+  const expectedName = normalizePersonNameForMatch(user.name)
+  const cardName = normalizePersonNameForMatch(vision.studentName)
+  if (!expectedName || expectedName !== cardName) {
+    return NextResponse.json(
+      {
+        error:
+          '학생증에 보이는 이름이 가입 시 입력한 이름과 일치하지 않아요. 이름을 본명으로 가입 정보와 맞춘 뒤 다시 시도해 주세요.',
+      },
       { status: 400 },
     )
   }

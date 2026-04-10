@@ -51,6 +51,7 @@ type ImagePart = {
 export type StudentIdVisionResult = {
   ok: boolean
   schoolName: string | null
+  studentName: string | null
   reason?: string
 }
 
@@ -59,7 +60,7 @@ export async function verifyStudentIdWithVision(
   mediaType: 'image/jpeg' | 'image/png' | 'image/webp',
 ): Promise<StudentIdVisionResult> {
   if (!process.env.ANTHROPIC_API_KEY) {
-    return { ok: false, schoolName: null, reason: 'AI 설정이 필요합니다.' }
+    return { ok: false, schoolName: null, studentName: null, reason: 'AI 설정이 필요합니다.' }
   }
 
   const imageBlock: ImagePart = {
@@ -79,10 +80,13 @@ export async function verifyStudentIdWithVision(
             type: 'text',
             text: `이 이미지가 대한민국의 중학교·고등학교 학생증(또는 재학증명에 가까운 공식 학생 신분을 보여주는 카드)으로 보이는지 판단해 주세요.
 시험지, 문제집, 답안, 일반 풍경 사진, UI 스크린샷만 있는 경우는 학생증이 아닙니다.
-학생증으로 인정할 때만 학교명을 이미지에 적힌 그대로 한글로 추출하세요 (예: OO중학교, OO고등학교).
+학생증으로 인정할 때는 카드에 보이는 **이름(본명)**과 **학교명**이 둘 다 식별 가능해야 합니다.
+- studentName: 카드에 적힌 이름을 그대로 추출 (한글 본명, 띄어쓰기는 이미지와 동일하게)
+- schoolName: 학교명을 이미지에 적힌 그대로 한글로 (예: OO중학교, OO고등학교)
+이름이나 학교명이 가려져 있거나 판독 불가면 isStudentId를 false로 하세요.
 
 반드시 JSON만 출력하세요. 마크다운 금지.
-형식: {"isStudentId": boolean, "schoolName": string | null, "reasonKo": string}`,
+형식: {"isStudentId": boolean, "studentName": string | null, "schoolName": string | null, "reasonKo": string}`,
           },
         ],
       },
@@ -93,7 +97,12 @@ export async function verifyStudentIdWithVision(
   try {
     parsed = extractJsonObject(firstTextBlock(response))
   } catch {
-    return { ok: false, schoolName: null, reason: '인식에 실패했습니다. 더 선명한 사진으로 다시 시도해 주세요.' }
+    return {
+      ok: false,
+      schoolName: null,
+      studentName: null,
+      reason: '인식에 실패했습니다. 더 선명한 사진으로 다시 시도해 주세요.',
+    }
   }
 
   const isStudentId = parsed.isStudentId === true
@@ -101,13 +110,22 @@ export async function verifyStudentIdWithVision(
     typeof parsed.schoolName === 'string' && parsed.schoolName.trim().length > 0
       ? parsed.schoolName.trim()
       : null
+  const studentName =
+    typeof parsed.studentName === 'string' && parsed.studentName.trim().length > 0
+      ? parsed.studentName.trim()
+      : null
   const reasonKo = typeof parsed.reasonKo === 'string' ? parsed.reasonKo : undefined
 
-  if (!isStudentId || !schoolName) {
-    return { ok: false, schoolName: null, reason: reasonKo || '학생증으로 확인되지 않았습니다.' }
+  if (!isStudentId || !schoolName || !studentName) {
+    return {
+      ok: false,
+      schoolName: null,
+      studentName: null,
+      reason: reasonKo || '학생증으로 확인되지 않았습니다. 이름과 학교가 함께 보이는 사진으로 다시 시도해 주세요.',
+    }
   }
 
-  return { ok: true, schoolName, reason: reasonKo }
+  return { ok: true, schoolName, studentName, reason: reasonKo }
 }
 
 export type ExamPaperVisionResult = {

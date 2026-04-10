@@ -162,8 +162,10 @@ export default function StudentVerifyPage() {
         학생증 인증
       </h1>
       <p style={{ margin: '0 0 22px', color: 'var(--muted)', fontSize: '14px', lineHeight: 1.65 }}>
-        학생증(또는 재학을 확인할 수 있는 카드) 사진을 올리면 AI가 학교명을 확인해요. 인증 후 커뮤니티를 이용할 수
-        있어요.
+        학생증(또는 재학을 확인할 수 있는 카드) 사진을 올리면 AI가 <strong style={{ color: 'var(--text)' }}>이름</strong>
+        과 <strong style={{ color: 'var(--text)' }}>학교명</strong>을 읽고, 가입 시 입력한{' '}
+        <strong style={{ color: 'var(--text)' }}>본명</strong>과 일치하는지 확인해요. 얼굴·이름·학교가 가리지 않게
+        찍어 주세요.
       </p>
 
       <Card pastel="yellow" style={{ padding: '20px' }}>
