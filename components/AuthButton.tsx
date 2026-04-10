@@ -63,7 +63,20 @@ export default function AuthButton() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ color: 'var(--text)', fontSize: '14px', fontWeight: 800 }}>{u?.name}님</span>
+          <Link
+            href="/account"
+            title="마이페이지"
+            style={{
+              color: 'var(--text)',
+              fontSize: '14px',
+              fontWeight: 800,
+              textDecoration: 'none',
+              borderBottom: '1px solid transparent',
+            }}
+            className="auth-name-link"
+          >
+            {u?.name}님
+          </Link>
           {showPendingBadge ? <PendingVerifyBadge /> : null}
         </div>
         <Button type="button" onClick={() => signOut()} variant="secondary" style={navBtnStyle}>

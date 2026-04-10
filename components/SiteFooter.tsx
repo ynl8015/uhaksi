@@ -34,6 +34,14 @@ export default function SiteFooter() {
           <p style={{ margin: 0 }}>
             전국 고등학교 시험 범위·유형 정보를 공유하는 서비스입니다.
           </p>
+          <div style={{ margin: '10px 0 0', fontWeight: 600, color: 'var(--text)' }}>
+            <p style={{ margin: 0 }}>
+              시험 일정·범위·후기 등은 여러 이용자가 함께 채우는 집단지성(위키에 가까운) 정보입니다.
+            </p>
+            <p style={{ margin: '8px 0 0' }}>
+              수업·시험과 관련한 사항은 학교 공지·교사 안내와 반드시 대조해 진위를 스스로 확인해 주세요.
+            </p>
+          </div>
           <p style={{ margin: '10px 0 0' }}>
             문의:{' '}
             <a href={`mailto:${SITE_CONTACT_EMAIL}`} style={{ color: 'var(--accent-strong)', textDecoration: 'underline' }}>

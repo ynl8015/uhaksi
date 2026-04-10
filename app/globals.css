@@ -41,6 +41,11 @@ body {
   font-family: 'Pretendard', sans-serif;
 }
 
+a.auth-name-link:hover {
+  color: var(--accent-strong);
+  border-bottom-color: rgba(255, 111, 15, 0.45);
+}
+
 /* Typography scale */
 .ui-title {
   font-size: 15px;
