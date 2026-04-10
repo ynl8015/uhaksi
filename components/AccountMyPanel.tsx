@@ -229,8 +229,8 @@ export default function AccountMyPanel({ user }: { user: AccountMyPanelUser }) {
                 회원 탈퇴
               </h2>
               <p style={{ margin: '0 0 22px', fontSize: '14px', lineHeight: 1.65, color: inkMuted, fontWeight: 500 }}>
-                탈퇴하면 계정과 연결된 커뮤니티 글·댓글·시험 후기가 삭제되며 되돌릴 수 없어요. 이메일 인증이 완료된 계정만
-                탈퇴할 수 있어요.
+                탈퇴하면 계정과 연결된 커뮤니티 글·댓글·시험 후기가 삭제되며 되돌릴 수 없어요. 
+                <br>이메일 인증이 완료된 계정만 탈퇴할 수 있어요.</br>
               </p>
               {!canWithdraw ? (
                 <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: '#b45309', lineHeight: 1.6 }}>
