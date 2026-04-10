@@ -18,9 +18,13 @@ export const communityShell = {
   tabBorder: '#e5e7eb',
 } as const
 
+const COMMUNITY_TIMEZONE = 'Asia/Seoul' as const
+
+/** 서버(UTC)·클라이언트(로컬)와 무관하게 항상 한국 표준시로 표시 */
 export function formatCommunityDate(iso: string) {
   const d = new Date(iso)
   return d.toLocaleString('ko-KR', {
+    timeZone: COMMUNITY_TIMEZONE,
     year: 'numeric',
     month: 'numeric',
     day: 'numeric',
