@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useId } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
@@ -58,6 +58,14 @@ function formatDate(yyyymmdd: string) {
 const GRADES = [1, 2, 3]
 const PERIODS = [1, 2, 3, 4]
 
+/** 네이티브 title용 한 줄 */
+const SCAN_CAMERA_HINT_TITLE =
+  '시험범위 통신문을 업로드하면 과목과 범위가 한 번에 채워져요.'
+const SCAN_CAMERA_HINT_LINES = [
+  '⭐ 시험범위 통신문을 업로드하면',
+  '과목과 범위가 한 번에 채워져요.',
+] as const
+
 type TableState = Record<number, Record<string, Record<number, string>>>
 
 function initTable(dates: string[]): TableState {
@@ -93,6 +101,7 @@ export default function ExamAccordion({
   const [loading, setLoading] = useState(false)
   const [parsing, setParsing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const scanCameraTipId = useId()
 
   const readOnly = !!existingExam && !editing
   const showInputs = !!session && editing
@@ -394,25 +403,39 @@ export default function ExamAccordion({
                     if (file) handleImageUpload(file)
                   }}
                 />
-                <Button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={parsing || (!editing && !!existingExam)}
-                  variant="ghost"
-                  size="sm"
-                  title={parsing ? '인식 중…' : '사진으로 입력'}
-                  aria-label={parsing ? '인식 중' : '사진으로 입력'}
-                  style={{
-                    minWidth: '36px',
-                    padding: '8px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '10px',
-                  }}
-                >
-                  <IconCamera size={18} />
-                </Button>
+                <span className="exam-scan-camera-wrap">
+                  <Button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={parsing || (!editing && !!existingExam)}
+                    variant="ghost"
+                    size="sm"
+                    title={
+                      parsing
+                        ? '인식 중…'
+                        : `사진으로 입력 — ${SCAN_CAMERA_HINT_TITLE}`
+                    }
+                    aria-label={parsing ? '인식 중' : '사진으로 입력'}
+                    aria-describedby={parsing ? undefined : scanCameraTipId}
+                    style={{
+                      minWidth: '36px',
+                      padding: '8px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '10px',
+                    }}
+                  >
+                    <IconCamera size={18} />
+                  </Button>
+                  <span id={scanCameraTipId} role="tooltip" className="exam-scan-camera-tip">
+                    {SCAN_CAMERA_HINT_LINES.map((line, i) => (
+                      <span key={i} className="exam-scan-camera-tip__line">
+                        {line}
+                      </span>
+                    ))}
+                  </span>
+                </span>
                 {!existingExam && !editing && (
                   <Button type="button" onClick={() => setEditing(true)} variant="secondary" size="sm" title="입력" aria-label="입력">
                     입력

@@ -428,3 +428,75 @@ body {
     padding: 9px 10px;
   }
 }
+
+/* 시험표 카메라 입력 — 호버·포커스 말풍선 */
+.exam-scan-camera-wrap {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.exam-scan-camera-tip {
+  position: absolute;
+  z-index: 60;
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translateX(-50%) translateY(4px);
+  width: max-content;
+  max-width: min(300px, calc(100vw - 40px));
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.65;
+  font-weight: 500;
+  letter-spacing: 0;
+  word-break: keep-all;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--ui-shadow-lg);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease,
+    visibility 0.16s;
+}
+
+.exam-scan-camera-tip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-bottom-color: var(--border);
+}
+
+.exam-scan-camera-tip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, 1px);
+  border: 6px solid transparent;
+  border-bottom-color: var(--bg);
+}
+
+.exam-scan-camera-tip__line {
+  display: block;
+}
+
+.exam-scan-camera-tip__line + .exam-scan-camera-tip__line {
+  margin-top: 0.35em;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .exam-scan-camera-wrap:hover .exam-scan-camera-tip,
+  .exam-scan-camera-wrap:focus-within .exam-scan-camera-tip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+}
