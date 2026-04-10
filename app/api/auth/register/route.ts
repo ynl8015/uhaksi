@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   const verifyUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify?token=${verifyToken}`
 
   await resend.emails.send({
-    from: 'onboarding@resend.dev',
+    from: 'noreply@uhaksi.kr',
     to: emailNorm,
     subject: '우리학교시험 이메일 인증',
     html: `

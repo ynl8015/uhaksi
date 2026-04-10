@@ -18,11 +18,16 @@ import {
 } from '@/components/CommunityShared'
 import { canAccessStudentCommunity } from '@/lib/communityAccess'
 
+function listHrefForCategory(category: CommunityCategory) {
+  return `/community?category=${category}`
+}
+
 type CommentRow = {
   id: number
   body: string
   createdAt: string
   authorSchool: string
+  isAuthor: boolean
 }
 
 type PostDetail = {
@@ -33,6 +38,7 @@ type PostDetail = {
   imageData: string | null
   createdAt: string
   authorSchool: string
+  isAuthor: boolean
   comments: CommentRow[]
 }
 
@@ -50,6 +56,12 @@ export default function CommunityPostDetailPage() {
   const [commentText, setCommentText] = useState('')
   const [sending, setSending] = useState(false)
   const [commentErr, setCommentErr] = useState('')
+
+  const [deletingPost, setDeletingPost] = useState(false)
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null)
+  const [editCommentDraft, setEditCommentDraft] = useState('')
+  const [savingCommentId, setSavingCommentId] = useState<number | null>(null)
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null)
 
   const canAccess = canAccessStudentCommunity(session?.user)
 
@@ -116,6 +128,73 @@ export default function CommunityPostDetailPage() {
     setSending(false)
   }
 
+  const deletePost = async () => {
+    if (!post || !Number.isFinite(postId)) return
+    if (!window.confirm('이 글을 삭제할까요? 삭제하면 되돌릴 수 없어요.')) return
+    setDeletingPost(true)
+    try {
+      const res = await fetch(`/api/community/posts/${postId}`, { method: 'DELETE' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(typeof data.error === 'string' ? data.error : '삭제에 실패했어요.')
+        setDeletingPost(false)
+        return
+      }
+      router.push(listHrefForCategory(post.category))
+    } catch {
+      alert('네트워크 오류가 났어요.')
+    }
+    setDeletingPost(false)
+  }
+
+  const saveCommentEdit = async (commentId: number) => {
+    const t = editCommentDraft.trim()
+    if (!t || !Number.isFinite(postId)) return
+    setSavingCommentId(commentId)
+    try {
+      const res = await fetch(`/api/community/posts/${postId}/comments/${commentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: t }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(typeof data.error === 'string' ? data.error : '수정에 실패했어요.')
+        setSavingCommentId(null)
+        return
+      }
+      setEditingCommentId(null)
+      setEditCommentDraft('')
+      await loadPost()
+    } catch {
+      alert('네트워크 오류가 났어요.')
+    }
+    setSavingCommentId(null)
+  }
+
+  const deleteComment = async (commentId: number) => {
+    if (!Number.isFinite(postId)) return
+    if (!window.confirm('이 댓글을 삭제할까요?')) return
+    setDeletingCommentId(commentId)
+    try {
+      const res = await fetch(`/api/community/posts/${postId}/comments/${commentId}`, { method: 'DELETE' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        alert(typeof data.error === 'string' ? data.error : '삭제에 실패했어요.')
+        setDeletingCommentId(null)
+        return
+      }
+      if (editingCommentId === commentId) {
+        setEditingCommentId(null)
+        setEditCommentDraft('')
+      }
+      await loadPost()
+    } catch {
+      alert('네트워크 오류가 났어요.')
+    }
+    setDeletingCommentId(null)
+  }
+
   if (status === 'loading' || (loading && !post)) {
     return (
       <main style={{ minHeight: 'calc(100vh - 64px)', background: shell.pageBg, padding: '28px 20px' }}>
@@ -180,7 +259,7 @@ export default function CommunityPostDetailPage() {
 
   const displayTitle = post.title?.trim() || '제목 없음'
   const titleMuted = !post.title?.trim()
-  const listHref = `/community?category=${post.category}`
+  const listHref = listHrefForCategory(post.category)
 
   return (
     <main
@@ -225,6 +304,34 @@ export default function CommunityPostDetailPage() {
             {displayTitle}
           </h1>
           <CommunityMetaRow school={post.authorSchool} date={post.createdAt} />
+
+          {post.isAuthor ? (
+            <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '10px 14px', alignItems: 'center' }}>
+              <Link
+                href={`/community/post/${postId}/edit`}
+                style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent-strong)', textDecoration: 'none' }}
+              >
+                수정
+              </Link>
+              <button
+                type="button"
+                disabled={deletingPost}
+                onClick={() => void deletePost()}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  padding: 0,
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: deletingPost ? '#d1d5db' : '#dc2626',
+                  cursor: deletingPost ? 'default' : 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {deletingPost ? '삭제 중…' : '삭제'}
+              </button>
+            </div>
+          ) : null}
 
           <div
             style={{
@@ -295,18 +402,127 @@ export default function CommunityPostDetailPage() {
                     <time style={{ color: '#9ca3af' }} dateTime={c.createdAt}>
                       {formatCommunityDate(c.createdAt)}
                     </time>
+                    {c.isAuthor ? (
+                      <>
+                        <span style={{ color: '#e5e7eb' }}>·</span>
+                        {editingCommentId === c.id ? (
+                          <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                            <button
+                              type="button"
+                              disabled={savingCommentId === c.id || !editCommentDraft.trim()}
+                              onClick={() => void saveCommentEdit(c.id)}
+                              style={{
+                                border: 'none',
+                                background: 'none',
+                                padding: 0,
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                color: savingCommentId === c.id || !editCommentDraft.trim() ? '#d1d5db' : 'var(--accent-strong)',
+                                cursor: savingCommentId === c.id || !editCommentDraft.trim() ? 'default' : 'pointer',
+                                fontFamily: 'inherit',
+                              }}
+                            >
+                              {savingCommentId === c.id ? '저장 중…' : '저장'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={savingCommentId === c.id}
+                              onClick={() => {
+                                setEditingCommentId(null)
+                                setEditCommentDraft('')
+                              }}
+                              style={{
+                                border: 'none',
+                                background: 'none',
+                                padding: 0,
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                color: '#6b7280',
+                                cursor: savingCommentId === c.id ? 'default' : 'pointer',
+                                fontFamily: 'inherit',
+                              }}
+                            >
+                              취소
+                            </button>
+                          </span>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              disabled={deletingCommentId === c.id}
+                              onClick={() => {
+                                setEditingCommentId(c.id)
+                                setEditCommentDraft(c.body)
+                              }}
+                              style={{
+                                border: 'none',
+                                background: 'none',
+                                padding: 0,
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                color: deletingCommentId === c.id ? '#d1d5db' : 'var(--accent-strong)',
+                                cursor: deletingCommentId === c.id ? 'default' : 'pointer',
+                                fontFamily: 'inherit',
+                              }}
+                            >
+                              수정
+                            </button>
+                            <button
+                              type="button"
+                              disabled={deletingCommentId === c.id}
+                              onClick={() => void deleteComment(c.id)}
+                              style={{
+                                border: 'none',
+                                background: 'none',
+                                padding: 0,
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                color: deletingCommentId === c.id ? '#d1d5db' : '#dc2626',
+                                cursor: deletingCommentId === c.id ? 'default' : 'pointer',
+                                fontFamily: 'inherit',
+                              }}
+                            >
+                              {deletingCommentId === c.id ? '삭제 중…' : '삭제'}
+                            </button>
+                          </>
+                        )}
+                      </>
+                    ) : null}
                   </div>
-                  <p
-                    style={{
-                      margin: '8px 0 0',
-                      fontSize: '14px',
-                      lineHeight: 1.65,
-                      color: '#374151',
-                      whiteSpace: 'pre-wrap',
-                    }}
-                  >
-                    {c.body}
-                  </p>
+                  {editingCommentId === c.id ? (
+                    <textarea
+                      className="ui-input"
+                      value={editCommentDraft}
+                      onChange={(e) => setEditCommentDraft(e.target.value)}
+                      rows={3}
+                      style={{
+                        marginTop: '8px',
+                        width: '100%',
+                        resize: 'vertical',
+                        fontSize: '14px',
+                        lineHeight: 1.65,
+                        boxSizing: 'border-box',
+                        fontFamily: 'inherit',
+                        border: `1px solid ${shell.line}`,
+                        borderRadius: '10px',
+                        padding: '10px 12px',
+                        background: '#fafafa',
+                        color: '#374151',
+                      }}
+                    />
+                  ) : (
+                    <p
+                      style={{
+                        margin: '8px 0 0',
+                        fontSize: '14px',
+                        lineHeight: 1.65,
+                        color: '#374151',
+                        whiteSpace: 'pre-wrap',
+                      }}
+                    >
+                      {c.body}
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>

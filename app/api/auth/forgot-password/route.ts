@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
   try {
     await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: 'noreply@uhaksi.kr',
       to: normalized,
       subject: '우리학교시험 비밀번호 재설정',
       html: `
