@@ -22,8 +22,11 @@ export async function POST(request: NextRequest) {
     select: { id: true, emailVerified: true },
   })
 
-  // 존재·미인증 여부를 응답으로 구분하지 않음 (항목 동일 메시지)
-  const generic = { message: '입력하신 이메일로 안내가 필요하면 메일을 보냈어요. 받은편지함을 확인해주세요.' }
+  // 존재·미인증 여부를 응답으로 구분하지 않음(계정 노출 방지). 다만 실제로는 이 경우 메일을 보내지 않음.
+  const generic = {
+    message:
+      '요청은 접수됐어요. 가입한 이메일이 맞고, 가입 후 이메일 인증까지 마친 계정에만 재설정 메일이 발송돼요. 해당된다면 1~2분 뒤 받은편지함·스팸함을 확인해 주세요. (미가입·인증 전이면 메일은 가지 않아요.)',
+  }
 
   if (!user || !user.emailVerified) {
     return NextResponse.json(generic)
