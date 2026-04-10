@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Button from '@/components/ui/Button'
 import Chip from '@/components/ui/Chip'
 import ExamFriendsSummary from '@/components/ExamFriendsSummary'
+import type { ExamAggBundle } from '@/lib/examReviewAggregatesForSchool'
 import ExamReviewModal from '@/components/ExamReviewModal'
 import { IconCamera, IconPencil, IconTrash } from '@/components/icons/ToolbarIcons'
 
@@ -21,6 +22,8 @@ type Props = {
   schoolId: number
   schoolName: string
   defaultOpen?: boolean
+  /** 시험 일정 RSC에서 미리 조회한 후기 집계 (학년별) */
+  reviewAggregateBundle?: ExamAggBundle
   existingExam?: {
     id: number
     title: string
@@ -69,7 +72,13 @@ function initTable(dates: string[]): TableState {
   return init
 }
 
-export default function ExamAccordion({ exam, schoolId, existingExam, defaultOpen = false }: Props) {
+export default function ExamAccordion({
+  exam,
+  schoolId,
+  existingExam,
+  defaultOpen = false,
+  reviewAggregateBundle,
+}: Props) {
   const [open, setOpen] = useState(defaultOpen)
   const { data: session } = useSession()
   const router = useRouter()
@@ -732,6 +741,7 @@ export default function ExamAccordion({ exam, schoolId, existingExam, defaultOpe
                       reloadKey={reviewReloadKey}
                       omitSectionTitle
                       locked={!session}
+                      initialByGrade={reviewAggregateBundle}
                     />
                     {session && (
                       <>

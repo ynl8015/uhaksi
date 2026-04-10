@@ -1,12 +1,8 @@
-'use client'
-
-import { Suspense, useCallback, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useSession } from 'next-auth/react'
-import Button from '@/components/ui/Button'
-import Card from '@/components/ui/Card'
-import Badge from '@/components/ui/Badge'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import {
   type CommunityCategory,
   COMMUNITY_TAB_LABELS,
@@ -14,22 +10,19 @@ import {
   communityShell as shell,
 } from '@/components/CommunityShared'
 import { canAccessStudentCommunity } from '@/lib/communityAccess'
+import {
+  getCommunityPostsForFeed,
+  parseCommunityCategoryParam,
+  type CommunityFeedPost,
+} from '@/lib/communityFeed'
 
-function parseTab(q: string | null): CommunityCategory {
-  if (q === 'STUDY_TIP' || q === 'STUDY_PROOF' || q === 'QA') return q
-  return 'QA'
+export const dynamic = 'force-dynamic'
+
+type SearchProps = {
+  searchParams: Promise<{ category?: string }>
 }
 
-type PostRow = {
-  id: number
-  title: string | null
-  body: string
-  imageData: string | null
-  createdAt: string
-  authorSchool: string
-}
-
-function CommunityPostCard({ post }: { post: PostRow }) {
+function CommunityPostCard({ post }: { post: CommunityFeedPost }) {
   const displayTitle = post.title?.trim() || '제목 없음'
   const titleMuted = !post.title?.trim()
 
@@ -96,122 +89,192 @@ function CommunityPostCard({ post }: { post: PostRow }) {
   )
 }
 
-function CommunityFeedInner() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [tab, setTab] = useState<CommunityCategory>('QA')
-  const [posts, setPosts] = useState<PostRow[]>([])
-  const [loadError, setLoadError] = useState('')
-  const [loadingList, setLoadingList] = useState(true)
+const gateMuted = '#6b7280'
+const gateTitle = '#111827'
 
-  const canAccess = canAccessStudentCommunity(session?.user)
+function CommunityGateLayout({ children }: { children: ReactNode }) {
+  return (
+    <main
+      style={{
+        minHeight: 'calc(100vh - 64px)',
+        background: shell.pageBg,
+        padding: '36px 20px 48px',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '440px',
+          marginTop: '8vh',
+          textAlign: 'center',
+        }}
+      >
+        {children}
+      </div>
+    </main>
+  )
+}
 
-  useEffect(() => {
-    setTab(parseTab(searchParams.get('category')))
-  }, [searchParams])
+export default async function CommunityPage({ searchParams }: SearchProps) {
+  const sp = await searchParams
+  const tab = parseCommunityCategoryParam(sp.category)
 
-  const setTabAndUrl = (c: CommunityCategory) => {
-    setTab(c)
-    router.replace(`/community?category=${c}`)
-  }
-
-  const loadPosts = useCallback(async (category: CommunityCategory) => {
-    setLoadingList(true)
-    setLoadError('')
-    try {
-      const res = await fetch(`/api/community/posts?category=${category}`)
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        setLoadError(typeof data.error === 'string' ? data.error : '목록을 불러오지 못했어요.')
-        setPosts([])
-        setLoadingList(false)
-        return
-      }
-      setPosts(Array.isArray(data.posts) ? data.posts : [])
-    } catch {
-      setLoadError('네트워크 오류가 났어요.')
-      setPosts([])
-    }
-    setLoadingList(false)
-  }, [])
-
-  useEffect(() => {
-    if (status !== 'authenticated' || !canAccess) {
-      setLoadingList(false)
-      setPosts([])
-      return
-    }
-    loadPosts(tab)
-  }, [status, canAccess, tab, loadPosts])
-
-  if (status === 'loading') {
-    return (
-      <main style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 24px 48px', background: shell.pageBg }}>
-        <p style={{ color: '#6b7280', fontSize: '14px' }}>불러오는 중…</p>
-      </main>
-    )
-  }
-
-  if (status === 'unauthenticated') {
-    return (
-      <main style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 24px 48px', background: shell.pageBg }}>
-        <Card pastel="yellow" style={{ padding: '20px' }}>
-          <Badge tone="accent">커뮤니티</Badge>
-          <p className="ui-title" style={{ margin: '12px 0 8px', color: 'var(--text)' }}>
-            로그인이 필요해요
-          </p>
-          <p style={{ margin: 0, color: 'var(--muted)', fontSize: '14px', lineHeight: 1.65 }}>
-            커뮤니티는 로그인 후, 학생 인증을 마친 분만 이용할 수 있어요.
-          </p>
-          <div style={{ marginTop: '16px' }}>
-            <Link href="/login" style={{ fontWeight: 800, color: 'var(--accent-strong)', textDecoration: 'none' }}>
-              로그인하기 →
-            </Link>
-          </div>
-        </Card>
-      </main>
-    )
-  }
-
+  const session = await getServerSession(authOptions)
   const u = session?.user
-  if (!u) return null
+
+  if (!u) {
+    return (
+      <CommunityGateLayout>
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            maxWidth: 320,
+            aspectRatio: '4 / 3',
+            margin: '0 auto 28px',
+          }}
+        >
+          <Image
+            src="/학생.png"
+            alt="학생 캐릭터 일러스트"
+            fill
+            sizes="320px"
+            priority
+            style={{ objectFit: 'contain' }}
+          />
+        </div>
+        <p
+          style={{
+            margin: '0 0 10px',
+            fontSize: '20px',
+            fontWeight: 800,
+            letterSpacing: '-0.45px',
+            lineHeight: 1.45,
+            color: gateTitle,
+          }}
+        >
+          이곳은 학생들만을 위한 공간입니다
+        </p>
+        <p
+          style={{
+            margin: '0 0 28px',
+            fontSize: '15px',
+            lineHeight: 1.65,
+            color: gateMuted,
+            fontWeight: 500,
+          }}
+        >
+          로그인해 주세요
+        </p>
+        <Link
+          href="/login"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: '200px',
+            padding: '12px 22px',
+            fontSize: '15px',
+            fontWeight: 700,
+            color: '#ffffff',
+            background: 'var(--accent-strong, #ea580c)',
+            borderRadius: '999px',
+            textDecoration: 'none',
+            boxShadow: '0 2px 10px rgba(234, 88, 12, 0.28)',
+          }}
+        >
+          로그인
+        </Link>
+      </CommunityGateLayout>
+    )
+  }
 
   if (!canAccessStudentCommunity(u)) {
     if (u.accountKind !== 'STUDENT') {
       return (
-        <main style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 24px 48px', background: shell.pageBg }}>
-          <Card pastel="mint" style={{ padding: '20px' }}>
-            <Badge tone="accent">안내</Badge>
-            <p className="ui-title" style={{ margin: '12px 0 8px', color: 'var(--text)' }}>
-              학생 전용 공간이에요
-            </p>
-            <p style={{ margin: 0, color: 'var(--muted)', fontSize: '14px', lineHeight: 1.65 }}>
-              커뮤니티는 회원가입 시 &quot;학생&quot;으로 가입하고 학생증 인증을 완료한 경우에만 이용할 수 있어요.
-            </p>
-          </Card>
-        </main>
+        <CommunityGateLayout>
+          <p
+            style={{
+              margin: '0 0 10px',
+              fontSize: '20px',
+              fontWeight: 800,
+              letterSpacing: '-0.45px',
+              lineHeight: 1.45,
+              color: gateTitle,
+            }}
+          >
+            학생 회원 전용이에요
+          </p>
+          <p style={{ margin: '0 0 28px', fontSize: '15px', lineHeight: 1.65, color: gateMuted, fontWeight: 500 }}>
+            커뮤니티는 가입 시 학생으로 선택하고, 학생증 인증을 마친 분만 이용할 수 있어요.
+          </p>
+          <Link
+            href="/"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '200px',
+              padding: '12px 22px',
+              fontSize: '15px',
+              fontWeight: 700,
+              color: '#374151',
+              background: '#ffffff',
+              border: `1px solid ${shell.line}`,
+              borderRadius: '999px',
+              textDecoration: 'none',
+            }}
+          >
+            홈으로
+          </Link>
+        </CommunityGateLayout>
       )
     }
     return (
-      <main style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 24px 48px', background: shell.pageBg }}>
-        <Card pastel="yellow" style={{ padding: '20px' }}>
-          <Badge tone="accent">학생 인증</Badge>
-          <p className="ui-title" style={{ margin: '12px 0 8px', color: 'var(--text)' }}>
-            학생증 인증을 먼저 완료해 주세요
-          </p>
-          <p style={{ margin: 0, color: 'var(--muted)', fontSize: '14px', lineHeight: 1.65 }}>
-            상단 이름 옆 <b>미인증</b>을 누르거나, 학생증 인증 페이지에서 사진을 올려 주세요.
-          </p>
-          <div style={{ marginTop: '16px' }}>
-            <Button type="button" variant="primary" size="md" onClick={() => router.push('/account/verify')}>
-              학생증 인증하기
-            </Button>
-          </div>
-        </Card>
-      </main>
+      <CommunityGateLayout>
+        <p
+          style={{
+            margin: '0 0 10px',
+            fontSize: '20px',
+            fontWeight: 800,
+            letterSpacing: '-0.45px',
+            lineHeight: 1.45,
+            color: gateTitle,
+          }}
+        >
+          학생증 인증이 필요해요
+        </p>
+        <p style={{ margin: '0 0 28px', fontSize: '15px', lineHeight: 1.65, color: gateMuted, fontWeight: 500 }}>
+          상단 프로필의 <strong style={{ color: '#374151' }}>미인증</strong>을 누르거나, 인증 페이지에서 학생증 사진을 올려 주세요.
+        </p>
+        <Link
+          href="/account/verify"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: '200px',
+            padding: '12px 22px',
+            fontSize: '15px',
+            fontWeight: 700,
+            color: '#ffffff',
+            background: 'var(--accent-strong, #ea580c)',
+            borderRadius: '999px',
+            textDecoration: 'none',
+            boxShadow: '0 2px 10px rgba(234, 88, 12, 0.28)',
+          }}
+        >
+          학생증 인증하기
+        </Link>
+      </CommunityGateLayout>
     )
   }
+
+  const feed = await getCommunityPostsForFeed(session, tab)
+  const posts = feed.ok ? feed.posts : []
 
   return (
     <main
@@ -283,10 +346,11 @@ function CommunityFeedInner() {
           {(Object.keys(COMMUNITY_TAB_LABELS) as CommunityCategory[]).map((c) => {
             const on = tab === c
             return (
-              <button
+              <Link
                 key={c}
-                type="button"
-                onClick={() => setTabAndUrl(c)}
+                href={`/community?category=${c}`}
+                scroll={false}
+                prefetch
                 style={{
                   padding: '9px 14px',
                   fontSize: '13px',
@@ -297,19 +361,17 @@ function CommunityFeedInner() {
                   color: on ? '#ffffff' : '#4b5563',
                   cursor: 'pointer',
                   transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+                  textDecoration: 'none',
+                  display: 'inline-block',
                 }}
               >
                 {COMMUNITY_TAB_LABELS[c]}
-              </button>
+              </Link>
             )
           })}
         </div>
 
-        {loadingList ? (
-          <p style={{ color: '#6b7280', fontSize: '14px' }}>불러오는 중…</p>
-        ) : loadError ? (
-          <p style={{ color: '#dc2626', fontSize: '14px' }}>{loadError}</p>
-        ) : posts.length === 0 ? (
+        {posts.length === 0 ? (
           <p style={{ color: '#9ca3af', fontSize: '14px', marginBottom: '24px' }}>아직 글이 없어요.</p>
         ) : (
           <div>
@@ -320,19 +382,5 @@ function CommunityFeedInner() {
         )}
       </div>
     </main>
-  )
-}
-
-export default function CommunityPage() {
-  return (
-    <Suspense
-      fallback={
-        <main style={{ minHeight: 'calc(100vh - 64px)', background: shell.pageBg, padding: '28px 20px' }}>
-          <p style={{ color: '#6b7280', fontSize: '14px' }}>불러오는 중…</p>
-        </main>
-      }
-    >
-      <CommunityFeedInner />
-    </Suspense>
   )
 }

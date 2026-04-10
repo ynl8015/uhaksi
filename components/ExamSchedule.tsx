@@ -2,6 +2,7 @@ import ExamAccordion from '@/components/ExamAccordion'
 import { extractExamPeriodsFromNeis, type NeisScheduleRow } from '@/lib/neisExam'
 import { resolveNeisSchoolCodesByAddress } from '@/lib/neisSchool'
 import { prisma } from '@/lib/prisma'
+import { loadExamAggBundlesForExams } from '@/lib/examReviewAggregatesForSchool'
 
 type ExamPeriod = {
   name: string
@@ -122,6 +123,9 @@ export default async function ExamSchedule({ schoolId, schoolName, schoolAddress
 
   const primaryName = ranked[0]?.e.name ?? null
 
+  const examTitles = ranked.map(({ e }) => e.name)
+  const reviewAggByExam = await loadExamAggBundlesForExams(schoolId, examTitles)
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       {ranked.map(({ e }) => (
@@ -132,6 +136,7 @@ export default async function ExamSchedule({ schoolId, schoolName, schoolAddress
           schoolName={schoolName}
           existingExam={existingByTitle.get(e.name) ?? null}
           defaultOpen={e.name === primaryName}
+          reviewAggregateBundle={reviewAggByExam.get(e.name) ?? { 1: null, 2: null, 3: null }}
         />
       ))}
     </div>

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Button from '@/components/ui/Button'
 import { IconBot } from '@/components/icons/ToolbarIcons'
+import type { ExamAggBundle, ExamReviewAggregateClient } from '@/lib/examReviewAggregatesForSchool'
 
 type Props = {
   schoolId: number
@@ -14,14 +15,11 @@ type Props = {
   reloadKey?: number
   omitSectionTitle?: boolean
   locked?: boolean
+  /** 서버에서 미리 조회한 1·2·3학년 집계 — 있으면 첫 화면에서 fetch·로딩 문구 없이 표시 */
+  initialByGrade?: ExamAggBundle
 }
 
-type Aggregate = {
-  sourceCount: number
-  statsJson: unknown
-  aiSummary: string | null
-  aiGeneratedAt: string | null
-}
+type Aggregate = ExamReviewAggregateClient
 
 type StatsShape = {
   difficulty?: { histogram?: Record<string, number> }
@@ -81,13 +79,27 @@ export default function ExamFriendsSummary({
   reloadKey = 0,
   omitSectionTitle = false,
   locked = false,
+  initialByGrade,
 }: Props) {
-  const [loading, setLoading] = useState(true)
-  const [agg, setAgg] = useState<Aggregate | null>(null)
+  const g = grade === 1 || grade === 2 || grade === 3 ? grade : 1
+  const seeded = initialByGrade?.[g]
+  const [loading, setLoading] = useState(() => initialByGrade === undefined)
+  const [agg, setAgg] = useState<Aggregate | null>(() => seeded ?? null)
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
+
+    if (reloadKey === 0 && initialByGrade !== undefined) {
+      setAgg(initialByGrade[g] ?? null)
+      setLoading(false)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    const quietRefresh = reloadKey > 0
+    if (!quietRefresh) setLoading(true)
+
     fetch(`/api/exam-analysis?schoolId=${schoolId}&examTitle=${encodeURIComponent(examTitle)}&grade=${grade}`)
       .then((r) => r.json())
       .then((d) => {
@@ -101,7 +113,7 @@ export default function ExamFriendsSummary({
     return () => {
       cancelled = true
     }
-  }, [schoolId, examTitle, grade, reloadKey])
+  }, [schoolId, examTitle, grade, g, reloadKey, initialByGrade])
 
   const computed = useMemo(() => {
     const stats = asStatsShape(agg?.statsJson)

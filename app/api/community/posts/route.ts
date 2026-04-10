@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 import type { CommunityCategory } from '@/types/communityCategory'
 import { detectExamPaperInImage } from '@/lib/visionModeration'
 import { parseDataUrlImage } from '@/lib/dataUrlImage'
+import { getCommunityPostsForFeed } from '@/lib/communityFeed'
 import { canAccessStudentCommunity } from '@/lib/communityAccess'
 import { communityAuthorSchool } from '@/lib/communityDisplay'
 
@@ -17,46 +18,24 @@ function canUseCommunity(session: Session | null): boolean {
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!canUseCommunity(session)) {
-    return NextResponse.json(
-      { error: '인증된 학생만 커뮤니티를 볼 수 있어요.', code: 'COMMUNITY_FORBIDDEN' },
-      { status: 403 },
-    )
-  }
-
   const categoryParam = request.nextUrl.searchParams.get('category')
   if (!categoryParam || !CATEGORIES.includes(categoryParam as CommunityCategory)) {
     return NextResponse.json({ error: '유효한 category가 필요합니다.' }, { status: 400 })
   }
-
   const category = categoryParam as CommunityCategory
 
-  const rows = await prisma.studentCommunityPost.findMany({
-    where: { category },
-    orderBy: { createdAt: 'desc' },
-    take: 100,
-    select: {
-      id: true,
-      category: true,
-      title: true,
-      body: true,
-      imageData: true,
-      createdAt: true,
-      user: { select: { isAdmin: true, verifiedSchoolName: true } },
-    },
-  })
+  const result = await getCommunityPostsForFeed(session, category)
+  if (!result.ok) {
+    if (result.code === 'FORBIDDEN') {
+      return NextResponse.json(
+        { error: '인증된 학생만 커뮤니티를 볼 수 있어요.', code: 'COMMUNITY_FORBIDDEN' },
+        { status: 403 },
+      )
+    }
+    return NextResponse.json({ error: '유효한 category가 필요합니다.' }, { status: 400 })
+  }
 
-  const posts = rows.map((p) => ({
-    id: p.id,
-    category: p.category,
-    title: p.title,
-    body: p.body,
-    imageData: p.imageData,
-    createdAt: p.createdAt,
-    authorSchool: communityAuthorSchool(p.user),
-  }))
-
-  return NextResponse.json({ posts })
+  return NextResponse.json({ posts: result.posts })
 }
 
 export async function POST(request: NextRequest) {
