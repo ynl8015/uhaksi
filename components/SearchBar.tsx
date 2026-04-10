@@ -99,7 +99,8 @@ export default function SearchBar() {
             listStyle: 'none',
             padding: '4px 0',
             margin: 0,
-            zIndex: 200,
+            /* 상단 sticky 네비(z-index 높음) 아래에만 보이도록 과도한 값 지양 */
+            zIndex: 30,
             maxHeight: '288px',
             overflowY: 'auto',
             boxShadow: '0 10px 24px rgba(15, 20, 25, 0.12)',

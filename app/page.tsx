@@ -41,9 +41,7 @@ export default function Home() {
           style={{
             width: '100%',
             maxWidth: '460px',
-            filter: 'drop-shadow(0 10px 28px rgba(17, 24, 39, 0.08))',
             position: 'relative',
-            zIndex: 50,
           }}
         >
           <SearchBar />

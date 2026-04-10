@@ -63,9 +63,11 @@ export default function RootLayout({
                 borderBottom: '1px solid var(--border)',
                 position: 'sticky',
                 top: 0,
-                zIndex: 50,
+                /* 본문(히어로 검색 등)의 z-index와 겹치지 않게 항상 위에 고정 */
+                zIndex: 200,
                 backdropFilter: 'saturate(180%) blur(8px)',
                 flexShrink: 0,
+                paddingTop: 'env(safe-area-inset-top, 0px)',
               }}
             >
               <div
@@ -77,6 +79,7 @@ export default function RootLayout({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  boxSizing: 'border-box',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
