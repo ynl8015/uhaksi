@@ -60,10 +60,10 @@ const PERIODS = [1, 2, 3, 4]
 
 /** 네이티브 title용 한 줄 */
 const SCAN_CAMERA_HINT_TITLE =
-  '시험범위 통신문을 업로드하면 과목과 범위가 한 번에 채워져요.'
+  '시험범위 통신문을 업로드하면 시험 과목이 한 번에 채워져요.'
 const SCAN_CAMERA_HINT_LINES = [
   '⭐ 시험범위 통신문을 업로드하면',
-  '과목과 범위가 한 번에 채워져요.',
+  '시험 과목이 한 번에 채워져요.',
 ] as const
 
 type TableState = Record<number, Record<string, Record<number, string>>>
