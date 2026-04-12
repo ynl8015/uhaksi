@@ -1,24 +1,63 @@
-/**
- * Claude가 마크다운 제목(## …)으로 시작하는 경우 UI에 그대로 노출되는 것을 막는다.
- * DB에 이미 저장된 문자열도 안전하게 보이도록 클라이언트·서버 어디서든 재사용 가능.
- */
-export function sanitizeAiSummaryText(input: string | null | undefined): string | null {
-  if (input == null) return null
-  const raw = input.replace(/\r\n/g, '\n').trim()
-  if (!raw) return null
+/** UI·저장 공통: AI 총평 최대 길이 (공백 포함 글자 수) */
+export const AI_SUMMARY_MAX_CHARS = 300
 
-  const lines = raw.split('\n')
+/**
+ * 마크다운·목록 흔적을 제거하고 한 덩어리 문장 흐름으로 만든 뒤 길이를 제한한다.
+ * DB에 이미 저장된 긴/마크다운 응답도 동일하게 정리된다.
+ */
+export function plainifyAndCapAiSummary(input: string | null | undefined): string | null {
+  if (input == null) return null
+  let s = input.replace(/\r\n/g, '\n').trim()
+  if (!s) return null
+
+  // 선행 마크다운 제목 줄 제거
+  const lines0 = s.split('\n')
   let i = 0
-  while (i < lines.length && /^#{1,6}\s/.test(lines[i].trim())) {
+  while (i < lines0.length && /^#{1,6}\s/.test(lines0[i].trim())) {
     i++
   }
-  const body = lines.slice(i).join('\n').trim()
-  if (body.length > 0) return body
+  s = lines0.slice(i).join('\n').trim()
+  if (!s) return null
 
-  const stripped = raw
+  // 구분선만 있는 줄 제거
+  s = s
     .split('\n')
-    .map((line) => line.replace(/^#{1,6}\s+/, '').trimEnd())
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !/^(\*{3,}|-{3,}|_{3,})$/.test(line))
     .join('\n')
-    .trim()
-  return stripped.length > 0 ? stripped : null
+
+  // 줄 단위: 목록 마커·숫자 목록 앞부분만 가볍게 정리 후 한 줄로 합침
+  const parts = s.split('\n').map((line) => {
+    let t = line.trim()
+    t = t.replace(/^#{1,6}\s+/, '')
+    t = t.replace(/^[-*+]\s+/, '')
+    t = t.replace(/^\d+[.)]\s+/, '')
+    return t
+  })
+  s = parts.filter(Boolean).join(' ')
+
+  // **굵게** 반복 제거
+  while (/\*\*[^*]+\*\*/.test(s)) {
+    s = s.replace(/\*\*([^*]+)\*\*/g, '$1')
+  }
+  s = s.replace(/\*\*/g, '')
+
+  // `코드`, 링크 [텍스트](url) → 텍스트만
+  s = s.replace(/`([^`]+)`/g, '$1')
+  s = s.replace(/\[([^\]]+)]\([^)]+\)/g, '$1')
+
+  s = s.replace(/\*+/g, '')
+  s = s.replace(/#{1,6}\s*/g, '')
+  s = s.replace(/\s+/g, ' ').trim()
+
+  if (!s) return null
+  const max = AI_SUMMARY_MAX_CHARS
+  if (s.length <= max) return s
+  const cut = s.slice(0, max - 1).trimEnd()
+  return `${cut}…`
+}
+
+/** @deprecated 이름 호환 — plainifyAndCapAiSummary와 동일 */
+export function sanitizeAiSummaryText(input: string | null | undefined): string | null {
+  return plainifyAndCapAiSummary(input)
 }

@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { plainifyAndCapAiSummary } from '@/lib/aiSummaryDisplay'
 
 export type ExamAnalysisKey = {
   schoolId: number
@@ -88,15 +89,15 @@ async function generateSummaryText(opts: {
   const model = 'claude-sonnet-4-6'
 
   const prompt = `너는 고등학교 내신 분석 교사다.
-아래는 학생들이 남긴 객관식·서술형 문항 수(자가보고 평균), 체감 난이도, 그리고 자유 후기 발췌다. 통계와 발췌를 바탕으로 선생님이 쓰는 것처럼 한국어로 총평을 작성하라.
+아래는 학생들이 남긴 객관식·서술형 문항 수(자가보고 평균), 체감 난이도, 그리고 자유 후기 발췌다. 통계와 발췌를 바탕으로 한국어로 아주 짧은 총평을 작성하라.
 
-조건:
-- 과장하지 말고 데이터에 근거해서 말하기
-- 다음 섹션을 포함: (1) 총평 (2) 난이도 (3) 객관식·서술형 비중과 출제 느낌 (4) 대비/학습 조언
-- 자유 후기 발췌에서 반복되는 표현·팁을 요약해 반영하기 (개인을 특정하지 말 것)
-- 불릿/짧은 문단 위주로 8~14줄
-- 마크다운 제목 문법(#, ##, ### 등)은 쓰지 말 것. 제목 줄 없이 본문만 작성할 것.
-- "학교ID: 숫자" 같은 메타 문구를 응답 맨 앞에 반복하지 말 것(내부 참고용일 뿐이다).
+엄수할 출력 규칙 (위반 금지):
+- 공백 포함 정확히 300자 이내. 300자를 넘기면 안 된다.
+- 한 덩어리의 평서문만: 줄바꿈 없이 한 줄로 쓸 것.
+- 마크다운·서식 금지: # 제목, ---, **굵게**, 목록(- ), 번호(1.), 따옴표 장식, 이모지 없음.
+- 난이도·객관식/서술형 비중·출제 느낌·짧은 학습 팁을 문장 안에 자연스럽게 녹일 것(소제목·번호 매기기 없이).
+- 과장 금지, 데이터에 근거. 개인 특정 금지.
+- "학교ID" 같은 메타 문구를 응답에 넣지 말 것.
 
 대상(참고용, 응답에 그대로 베끼지 말 것):
 - 학교ID: ${opts.key.schoolId}
@@ -110,11 +111,12 @@ ${JSON.stringify(opts.stats, null, 2)}
   try {
     const res = await client.messages.create({
       model,
-      max_tokens: 700,
+      max_tokens: 500,
       messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
     })
-    const text = res.content[0]?.type === 'text' ? res.content[0].text : ''
-    if (!text.trim()) return null
+    const raw = res.content[0]?.type === 'text' ? res.content[0].text : ''
+    const text = plainifyAndCapAiSummary(raw)
+    if (!text) return null
     return { text, model }
   } catch {
     return null
