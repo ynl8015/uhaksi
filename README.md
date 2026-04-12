@@ -93,6 +93,7 @@ AI가 과목·날짜·시간을 인식해 학년별 시간표로 변환합니다
 
 </div>
 
+## 기술스택
 <br/>
 
 | Category | Stack |
@@ -172,8 +173,7 @@ Sharp로 회전 보정·그레이스케일·샤프닝을 적용한 뒤 Claude Vi
 <br/>
 
 ## 👩‍💻 개발자 소개
-
-<div align="center">
+<div>
 
 | Name | Avatar | MBTI | Role |
 |------|--------|------|------|
