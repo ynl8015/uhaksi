@@ -91,18 +91,14 @@ Sharp로 이미지를 전처리(회전·그레이스케일·샤프닝)한 뒤 Cl
 
 <img width="734" height="433" alt="Image" src="https://github.com/user-attachments/assets/0e96021a-6019-4861-9e7b-03f43cc8db8b" />
 
-`app/`은 라우팅과 UI만 담당하고, 핵심 도메인 로직은 `lib/`에 모았습니다.
-API에서는 `getServerSession`으로 권한을 검사하고, 공유 타입은 `types/`에서 일괄 관리합니다.
 
-| 분류 | 기술 |
-|------|------|
-| **Frontend** | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS |
-| **Backend** | Next.js Route Handler |
-| **Database** | PostgreSQL, Prisma ORM |
-| **Auth** | NextAuth.js (Credentials + JWT) |
-| **AI / 이미지** | Claude Vision (Anthropic), Sharp |
-| **외부 연동** | NEIS 오픈API, Resend (이메일) |
-| **Deployment** | Vercel · Supabase Postgres |
+
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat&logo=typescript&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?style=flat&logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
 
 <br/>
 
