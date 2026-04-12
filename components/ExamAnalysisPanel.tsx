@@ -3,7 +3,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useMemo, useState } from 'react'
-import { sanitizeAiSummaryText } from '@/lib/aiSummaryDisplay'
+import { sanitizeAiSummaryText, splitAiSummaryParagraphs } from '@/lib/aiSummaryDisplay'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 type Props = {
@@ -62,6 +62,7 @@ export default function ExamAnalysisPanel({ schoolId, examTitle, grade, reloadKe
   }, [agg])
 
   const summaryText = useMemo(() => sanitizeAiSummaryText(agg?.aiSummary ?? null), [agg?.aiSummary])
+  const summaryParagraphs = useMemo(() => splitAiSummaryParagraphs(summaryText), [summaryText])
 
   const countAvgs = useMemo(() => {
     const c = asStatsShape(agg?.statsJson)?.counts ?? null
@@ -92,22 +93,37 @@ export default function ExamAnalysisPanel({ schoolId, examTitle, grade, reloadKe
         <p className="ui-meta" style={{ margin: 0 }}>
           후기 {agg.sourceCount}개 기반 · {agg.aiGeneratedAt ? `업데이트: ${new Date(agg.aiGeneratedAt).toLocaleString()}` : '업데이트 없음'}
         </p>
-        <p
+        <div
           style={{
-            margin: '10px 0 0',
-            fontSize: '13px',
-            lineHeight: 1.92,
-            color: 'var(--text)',
-            whiteSpace: 'pre-line',
-            wordBreak: 'keep-all',
-            overflowWrap: 'break-word',
+            marginTop: '10px',
             paddingLeft: '10px',
             borderLeft: '3px solid rgba(255, 111, 15, 0.28)',
           }}
         >
-          {summaryText ??
-            '요약을 생성하지 못했습니다. (후기 수가 부족하거나, 생성에 실패했을 수 있어요)'}
-        </p>
+          {summaryParagraphs.length > 0 ? (
+            summaryParagraphs.map((para, idx) => (
+              <p
+                key={idx}
+                style={{
+                  margin: idx > 0 ? '10px 0 0' : 0,
+                  fontSize: '13px',
+                  lineHeight: 1.92,
+                  color: 'var(--text)',
+                  whiteSpace: 'pre-line',
+                  wordBreak: 'keep-all',
+                  overflowWrap: 'break-word',
+                }}
+              >
+                {para}
+              </p>
+            ))
+          ) : (
+            <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.92, color: 'var(--text)' }}>
+              {summaryText ??
+                '요약을 생성하지 못했습니다. (후기 수가 부족하거나, 생성에 실패했을 수 있어요)'}
+            </p>
+          )}
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>

@@ -7,7 +7,7 @@ import Link from 'next/link'
 import Button from '@/components/ui/Button'
 import { IconBot } from '@/components/icons/ToolbarIcons'
 import type { ExamAggBundle, ExamReviewAggregateClient } from '@/lib/examReviewAggregatesForSchool'
-import { sanitizeAiSummaryText } from '@/lib/aiSummaryDisplay'
+import { sanitizeAiSummaryText, splitAiSummaryParagraphs } from '@/lib/aiSummaryDisplay'
 
 type Props = {
   schoolId: number
@@ -134,13 +134,14 @@ export default function ExamFriendsSummary({
     const subj = Number(counts.subjective?.avg ?? counts.writing?.avg ?? 0)
     const barMax = Math.max(...['1', '2', '3', '4', '5'].map((k) => histogram[k] ?? 0), 1)
 
+    const aiSummaryDisplay = sanitizeAiSummaryText(agg?.aiSummary ?? null)
     return {
       avgDifficulty,
       histogram,
       barMax,
       easyHighPct,
-      /** 전체 총평(첫 줄만 쓰면 ## 제목만 보이는 버그 방지) */
-      aiSummaryDisplay: sanitizeAiSummaryText(agg?.aiSummary ?? null),
+      aiSummaryDisplay,
+      aiSummaryParagraphs: splitAiSummaryParagraphs(aiSummaryDisplay),
       counts: { mcq, subj },
       total,
     }
@@ -373,25 +374,47 @@ export default function ExamFriendsSummary({
         </span>
         <span>AI 후기 총평</span>
       </p>
-      <p
+      <div
         style={{
-          margin: 0,
-          fontSize: z(15),
-          lineHeight: 1.92,
-          color: bodyColor,
-          fontWeight: 500,
-          whiteSpace: 'pre-line',
-          wordBreak: 'keep-all',
-          overflowWrap: 'break-word',
           paddingLeft: z(10),
           borderLeft: `${Math.max(2, z(3))}px solid rgba(255, 111, 15, 0.28)`,
         }}
       >
-        {computed.aiSummaryDisplay ??
-          (agg.sourceCount < 3
-            ? '후기가 3개 이상이면 여기에 AI 총평이 붙어요.'
-            : '이번에는 요약을 만들지 못했어요. 잠시 후 다시 시도해 보세요.')}
-      </p>
+        {computed.aiSummaryParagraphs.length > 0 ? (
+          computed.aiSummaryParagraphs.map((para, idx) => (
+            <p
+              key={idx}
+              style={{
+                margin: idx > 0 ? `${z(10)}px 0 0` : 0,
+                fontSize: z(15),
+                lineHeight: 1.92,
+                color: bodyColor,
+                fontWeight: 500,
+                whiteSpace: 'pre-line',
+                wordBreak: 'keep-all',
+                overflowWrap: 'break-word',
+              }}
+            >
+              {para}
+            </p>
+          ))
+        ) : (
+          <p
+            style={{
+              margin: 0,
+              fontSize: z(15),
+              lineHeight: 1.92,
+              color: bodyColor,
+              fontWeight: 500,
+              wordBreak: 'keep-all',
+            }}
+          >
+            {agg.sourceCount < 3
+              ? '후기가 3개 이상이면 여기에 AI 총평이 붙어요.'
+              : '이번에는 요약을 만들지 못했어요. 잠시 후 다시 시도해 보세요.'}
+          </p>
+        )}
+      </div>
     </div>
   )
 
