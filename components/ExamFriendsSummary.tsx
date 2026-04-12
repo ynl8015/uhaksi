@@ -7,6 +7,7 @@ import Link from 'next/link'
 import Button from '@/components/ui/Button'
 import { IconBot } from '@/components/icons/ToolbarIcons'
 import type { ExamAggBundle, ExamReviewAggregateClient } from '@/lib/examReviewAggregatesForSchool'
+import { sanitizeAiSummaryText } from '@/lib/aiSummaryDisplay'
 
 type Props = {
   schoolId: number
@@ -29,13 +30,6 @@ type StatsShape = {
 function asStatsShape(v: unknown): StatsShape {
   if (typeof v !== 'object' || v === null) return {}
   return v as StatsShape
-}
-
-function firstLine(v: string | null): string | null {
-  if (!v) return null
-  const line = v.split('\n').map((s) => s.trim()).find(Boolean) ?? null
-  if (!line) return null
-  return line.length > 200 ? `${line.slice(0, 200)}…` : line
 }
 
 const metaColor = '#6b7280'
@@ -145,7 +139,8 @@ export default function ExamFriendsSummary({
       histogram,
       barMax,
       easyHighPct,
-      oneLine: firstLine(agg?.aiSummary ?? null),
+      /** 전체 총평(첫 줄만 쓰면 ## 제목만 보이는 버그 방지) */
+      aiSummaryDisplay: sanitizeAiSummaryText(agg?.aiSummary ?? null),
       counts: { mcq, subj },
       total,
     }
@@ -378,8 +373,17 @@ export default function ExamFriendsSummary({
         </span>
         <span>AI 후기 총평</span>
       </p>
-      <p style={{ margin: 0, fontSize: z(15), lineHeight: 1.75, color: bodyColor, fontWeight: 500 }}>
-        {computed.oneLine ??
+      <p
+        style={{
+          margin: 0,
+          fontSize: z(15),
+          lineHeight: 1.75,
+          color: bodyColor,
+          fontWeight: 500,
+          whiteSpace: 'pre-wrap',
+        }}
+      >
+        {computed.aiSummaryDisplay ??
           (agg.sourceCount < 3
             ? '후기가 3개 이상이면 여기에 AI 총평이 붙어요.'
             : '이번에는 요약을 만들지 못했어요. 잠시 후 다시 시도해 보세요.')}

@@ -3,6 +3,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useMemo, useState } from 'react'
+import { sanitizeAiSummaryText } from '@/lib/aiSummaryDisplay'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 type Props = {
@@ -60,6 +61,8 @@ export default function ExamAnalysisPanel({ schoolId, examTitle, grade, reloadKe
     return ['1', '2', '3', '4', '5'].map((k) => ({ difficulty: k, count: hist[k] ?? 0 }))
   }, [agg])
 
+  const summaryText = useMemo(() => sanitizeAiSummaryText(agg?.aiSummary ?? null), [agg?.aiSummary])
+
   const countAvgs = useMemo(() => {
     const c = asStatsShape(agg?.statsJson)?.counts ?? null
     if (!c) return []
@@ -98,7 +101,8 @@ export default function ExamAnalysisPanel({ schoolId, examTitle, grade, reloadKe
             whiteSpace: 'pre-wrap',
           }}
         >
-          {agg.aiSummary ?? '요약을 생성하지 못했습니다. (후기 수가 부족하거나, 생성에 실패했을 수 있어요)'}
+          {summaryText ??
+            '요약을 생성하지 못했습니다. (후기 수가 부족하거나, 생성에 실패했을 수 있어요)'}
         </p>
       </div>
 
