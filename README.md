@@ -5,36 +5,26 @@
 <br/>
 <br/>
 
+**[🌐 서비스 바로가기](https://uhaksi.kr)**
+
+<br/>
+
+[서비스 소개](#서비스-소개) &nbsp;·&nbsp; [주요 기능](#주요-기능) &nbsp;·&nbsp; [아키텍처](#아키텍처) &nbsp;·&nbsp; [핵심 경험](#핵심-경험) &nbsp;·&nbsp; [개발 스토리](#개발-스토리)
+
+</div>
+
+<br/>
+
 ## 서비스 소개
 
 **같은 학교 학생들끼리 시험 범위·후기·공부 정보를 나누는 공간입니다.**
 
-NEIS 공공 데이터와 AI를 엮어 정보 수집의 수고를 줄이고, 
-<br/>
-<br/>
+NEIS 공공 데이터와 AI를 엮어 정보 수집의 수고를 줄이고,
 학생 인증 커뮤니티로 재방문 이유를 만들었습니다.
 
 <br/>
-[🌐 서비스 바로가기] 
-<br/>
-(https://uhaksi.kr)
-<br/>
-<br/>
-
-[서비스 소개](#서비스-소개)
-<br/>
-[주요 기능](#주요-기능)
-<br/>
-[아키텍처](#아키텍처)
-<br/>
-[핵심 경험](#핵심-경험)
-<br/>
-[개발 스토리](#개발-스토리)
-
-</div>
 
 ## 주요 기능
-<br/>
 
 <div align="center">
 
@@ -48,37 +38,29 @@ AI가 과목·날짜·시간을 인식해 학년별 시간표로 변환합니다
 <br/>
 
 **[2] 학생 리뷰 기반 AI 시험 유형 분석**
-<br/>
 
 후기가 쌓일수록 더 정확해지는 <br/>
 **학교별 시험 유형 안내**를 제공합니다.
-<br/>
 
 ![Image](https://github.com/user-attachments/assets/193d102b-9c38-4d1c-8142-5759290f1063)
 
 <br/>
 
 **[3] 같은 학교 학생들만의 커뮤니티**
-<br/>
 
-당근마켓이 동네로 이웃을 연결하듯, 
-<br/>
-우학시는 **학생**이라는 공통분모로 같은 학교 친구들을 연결합니다.
-<br/>
+당근마켓이 동네로 이웃을 연결하듯, <br/>
+우학시는 **학생**이라는 공통분모로 같은 학교 친구들을 연결합니다. <br/>
 익명 게시판, 댓글, 공부 인증 — 시험 기간에 함께할 수 있는 공간입니다.
-<br/>
 
 ![Image](https://github.com/user-attachments/assets/49c4c50b-f018-410c-8cf0-c1ad52f411da)
 
 <br/>
 
 **[4] 학생증 + 본명 인증 로그인**
-<br/>
 
-학생증 Vision 검증 + 본명 정규화 매칭으로 
-<br/>
+학생증 Vision 검증 + 본명 정규화 매칭으로 <br/>
 실제 재학생만 커뮤니티에 접근할 수 있습니다.
-<br/>
+
 <img width="964" height="703" alt="Image" src="https://github.com/user-attachments/assets/0d8492c4-c649-48e8-a3f2-c1878570c749" />
 
 </div>
@@ -93,8 +75,9 @@ AI가 과목·날짜·시간을 인식해 학년별 시간표로 변환합니다
 
 </div>
 
-## 기술스택
 <br/>
+
+## 기술스택
 
 | Category | Stack |
 |----------|-------|
@@ -173,7 +156,6 @@ Sharp로 회전 보정·그레이스케일·샤프닝을 적용한 뒤 Claude Vi
 <br/>
 
 ## 👩‍💻 개발자 소개
-<div>
 
 | Name | Avatar | MBTI | Role |
 |------|--------|------|------|
@@ -182,6 +164,5 @@ Sharp로 회전 보정·그레이스케일·샤프닝을 적용한 뒤 Claude Vi
 <br/>
 
 [![GitHub](https://img.shields.io/badge/GitHub-ynl8015-181717?style=flat-square&logo=github)](https://github.com/ynl8015)
+&nbsp;
 [![서비스](https://img.shields.io/badge/Service-uhaksi.kr-000000?style=flat-square&logo=vercel&logoColor=white)](https://uhaksi.kr)
-
-</div>
