@@ -1,6 +1,8 @@
 <div align="center">
 
-<img width="669" height="283" alt="Image" src="https://github.com/user-attachments/assets/d79d4aa9-5bd5-4fa6-97f8-28c94eb89c91" />
+<img width="800" height="273" alt="Image" src="https://github.com/user-attachments/assets/2ece70e6-5cba-4951-b620-210ce53f881d" />
+<br/>
+<br/>
 <br/>
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js)
@@ -87,24 +89,7 @@ Sharp로 이미지를 전처리(회전·그레이스케일·샤프닝)한 뒤 Cl
 
 ## ⚙️ 아키텍처
 
-<!-- 🖼️ 시스템 아키텍처 다이어그램 (draw.io / Excalidraw 권장) -->
-<!-- ![아키텍처](이미지_URL) -->
-
-```
-uhaksi/
-├── app/                  # Next.js App Router
-│   └── api/              # Route Handler (인증·시험·커뮤니티·AI·NEIS)
-├── components/           # 재사용 UI 컴포넌트
-├── lib/                  # 도메인 로직
-│   ├── auth.ts           # NextAuth 설정
-│   ├── neisExam.ts       # NEIS 일정에서 시험 기간 추출
-│   ├── neisSchool.ts     # NEIS 학교 코드·주소 매칭
-│   ├── examAnalysis.ts   # 후기 집계 및 AI 요약
-│   └── communityFeed.ts  # 커뮤니티 피드·권한
-├── prisma/               # DB 스키마 및 마이그레이션
-├── public/               # 정적 파일
-└── types/                # 공유 TypeScript 타입
-```
+<img width="734" height="433" alt="Image" src="https://github.com/user-attachments/assets/0e96021a-6019-4861-9e7b-03f43cc8db8b" />
 
 `app/`은 라우팅과 UI만 담당하고, 핵심 도메인 로직은 `lib/`에 모았습니다.
 API에서는 `getServerSession`으로 권한을 검사하고, 공유 타입은 `types/`에서 일괄 관리합니다.
