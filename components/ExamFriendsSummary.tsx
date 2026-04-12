@@ -377,10 +377,14 @@ export default function ExamFriendsSummary({
         style={{
           margin: 0,
           fontSize: z(15),
-          lineHeight: 1.75,
+          lineHeight: 1.92,
           color: bodyColor,
           fontWeight: 500,
-          whiteSpace: 'pre-wrap',
+          whiteSpace: 'pre-line',
+          wordBreak: 'keep-all',
+          overflowWrap: 'break-word',
+          paddingLeft: z(10),
+          borderLeft: `${Math.max(2, z(3))}px solid rgba(255, 111, 15, 0.28)`,
         }}
       >
         {computed.aiSummaryDisplay ??

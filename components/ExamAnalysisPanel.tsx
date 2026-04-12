@@ -96,9 +96,13 @@ export default function ExamAnalysisPanel({ schoolId, examTitle, grade, reloadKe
           style={{
             margin: '10px 0 0',
             fontSize: '13px',
-            lineHeight: 1.7,
+            lineHeight: 1.92,
             color: 'var(--text)',
-            whiteSpace: 'pre-wrap',
+            whiteSpace: 'pre-line',
+            wordBreak: 'keep-all',
+            overflowWrap: 'break-word',
+            paddingLeft: '10px',
+            borderLeft: '3px solid rgba(255, 111, 15, 0.28)',
           }}
         >
           {summaryText ??
