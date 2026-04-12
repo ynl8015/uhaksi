@@ -1,13 +1,6 @@
 <div align="center">
 
 <img width="669" height="283" alt="Image" src="https://github.com/user-attachments/assets/d79d4aa9-5bd5-4fa6-97f8-28c94eb89c91" />
-
-# 🏫 우학시
-
-### 학교 시험 정보 공유 서비스
-
-> 시험 범위부터 후기까지, 우리 학교 시험 준비는 여기서
-
 <br/>
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js)
