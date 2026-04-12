@@ -91,14 +91,23 @@ Sharp로 이미지를 전처리(회전·그레이스케일·샤프닝)한 뒤 Cl
 
 <img width="734" height="433" alt="Image" src="https://github.com/user-attachments/assets/0e96021a-6019-4861-9e7b-03f43cc8db8b" />
 
+<br/>
+<br/>
 
+## 기술 스택
 
-![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js)
-![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat&logo=typescript&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?style=flat&logo=prisma&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
+## 기술 스택
+
+| Category | Stack |
+|----------|-------|
+| **Common** | ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white) ![Node.js](https://img.shields.io/badge/Node.js-LTS-339933?logo=nodedotjs&logoColor=white) ![npm](https://img.shields.io/badge/npm-lockfile-CB3837?logo=npm&logoColor=white) ![ESLint](https://img.shields.io/badge/ESLint-9-4B32C3?logo=eslint&logoColor=white) |
+| **Frontend** | ![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white) ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black) ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white) ![Recharts](https://img.shields.io/badge/Recharts-3-8884d8) |
+| **Backend** | ![Next.js](https://img.shields.io/badge/API-Route%20Handlers-000000?logo=nextdotjs&logoColor=white) (same app; server on **Node.js**) |
+| **Auth & security** | ![NextAuth.js](https://img.shields.io/badge/NextAuth.js-4-5682F3) ![bcrypt](https://img.shields.io/badge/bcryptjs-password%20hash-003B57) |
+| **Data** | ![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white) |
+| **External** | **NEIS** (학사일정·학교정보 오픈API) ![Anthropic](https://img.shields.io/badge/Anthropic-Claude-D4A27F?logo=anthropic&logoColor=white) ![Resend](https://img.shields.io/badge/Resend-email-000000?logo=resend&logoColor=white) |
+| **Media / AI input** | ![Sharp](https://img.shields.io/badge/Sharp-image%20preprocess-99F?logo=sharp&logoColor=black) |
+| **Deployment** | ![Vercel](https://img.shields.io/badge/Vercel-deploy-000000?logo=vercel&logoColor=white) · PostgreSQL *(호스트: `DATABASE_URL` — 예: Supabase 등, 코드만으로는 단정 불가)* |
 
 <br/>
 
