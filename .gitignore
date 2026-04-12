@@ -1,5 +1,9 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Python (로컬 가상환경 — 레포에 올리면 GitHub 언어 통계에 Python이 과대 집계됨)
+.venv/
+venv/
+
 # dependencies
 /node_modules
 /.pnp
